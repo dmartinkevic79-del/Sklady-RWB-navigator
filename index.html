@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Навигатор по складам WB</title>
+    
+    <!-- Иконки и PWA настройки для iPhone / Android / ПК -->
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Wildberries_logo_2021.svg/1200px-Wildberries_logo_2021.svg.png">
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Wildberries_logo_2021.svg/1200px-Wildberries_logo_2021.svg.png">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Склады WB">
+
+    <!-- Встроенный манифест для установки приложения (PWA) -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22%D0%9D%D0%B0%D0%B2%D0%B8%D0%B3%D0%B0%D1%82%D0%BE%D1%80%20%D0%BF%D0%BE%20%D1%81%D0%BA%D0%BB%D0%B0%D0%B4%D0%B0%D0%BC%20WB%22%2C%22short_name%22%3A%22%D0%A1%D0%BA%D0%BB%D0%B0%D0%B4%D1%8B%20WB%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b0f19%22%2C%22theme_color%22%3A%22%230b0f19%22%2C%22start_url%22%3A%22.%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2Ff%2Fff%2FWildberries_logo_2021.svg%2F1200px-Wildberries_logo_2021.svg.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+    <!-- Движок Яндекс.Карт для живых точек по статусам из таблицы -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151b2b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(203, 17, 171, 0.45);
+            --glass-header: rgba(11, 15, 25, 0.92);
+            --tag-bg: rgba(255, 255, 255, 0.05);
+            --tag-text: #cbd5e1;
+
+            --id-badge-text: #ff71e1;
+            --id-badge-bg: rgba(203, 17, 171, 0.18);
+            --id-badge-border: rgba(203, 17, 171, 0.35);
+
+            --tag-type-text: #fbbf24;
+            --tag-type-bg: rgba(245, 158, 11, 0.12);
+            --tag-type-border: rgba(245, 158, 11, 0.25);
+
+            --tag-active-text: #34d399;
+            --tag-active-bg: rgba(16, 185, 129, 0.12);
+            --tag-active-border: rgba(16, 185, 129, 0.25);
+
+            --tag-warning-text: #fbbf24;
+            --tag-warning-bg: rgba(245, 158, 11, 0.15);
+            --tag-warning-border: rgba(245, 158, 11, 0.3);
+
+            --tag-info-text: #60a5fa;
+            --tag-info-bg: rgba(59, 130, 246, 0.12);
+            --tag-info-border: rgba(59, 130, 246, 0.25);
+
+            --wb-accent: #cb11ab;
+            --wb-gradient: linear-gradient(135deg, #cb11ab 0%, #481173 100%);
+            --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.45);
+            --highlight-bg: rgba(203, 17, 171, 0.28);
+            --inner-box-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f1f5f9; 
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(203, 17, 171, 0.35);
+            --glass-header: rgba(241, 245, 249, 0.94);
+            --tag-bg: rgba(15, 23, 42, 0.04);
+            --tag-text: #334155;
+
+            --id-badge-text: #86198f;
+            --id-badge-bg: rgba(203, 17, 171, 0.1);
+            --id-badge-border: rgba(203, 17, 171, 0.25);
+
+            --tag-type-text: #9a3412;
+            --tag-type-bg: rgba(245, 158, 11, 0.12);
+            --tag-type-border: rgba(245, 158, 11, 0.3);
+
+            --tag-active-text: #065f46;
+            --tag-active-bg: rgba(16, 185, 129, 0.12);
+            --tag-active-border: rgba(16, 185, 129, 0.3);
+
+            --tag-warning-text: #9a3412;
+            --tag-warning-bg: rgba(245, 158, 11, 0.12);
+            --tag-warning-border: rgba(245, 158, 11, 0.3);
+
+            --tag-info-text: #1d4ed8;
+            --tag-info-bg: rgba(59, 130, 246, 0.1);
+            --tag-info-border: rgba(59, 130, 246, 0.25);
+
+            --shadow-hover: 0 12px 32px rgba(15, 23, 42, 0.08);
+            --highlight-bg: rgba(203, 17, 171, 0.18);
+            --inner-box-bg: rgba(0, 0, 0, 0.025);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color); color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            display: flex; flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--wb-accent); }
+
+        /* ЭКРАН АВТОРИЗАЦИИ */
+        #authOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); display: none; justify-content: center; align-items: center;
+            z-index: 5000; padding: 20px;
+        }
+        .auth-box {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 22px; padding: 36px 28px; width: 100%; max-width: 380px;
+            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            animation: fadeIn 0.3s ease;
+        }
+        .auth-logo {
+            width: 58px; height: 58px; border-radius: 16px; background: var(--wb-gradient);
+            display: inline-flex; align-items: center; justify-content: center; font-size: 28px;
+            margin-bottom: 16px; box-shadow: 0 8px 24px rgba(203, 17, 171, 0.35);
+        }
+        .auth-box h2 { margin: 0 0 8px 0; font-size: 22px; font-weight: 800; }
+        .auth-box p { margin: 0 0 24px 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.45; }
+        .auth-input {
+            width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border-color);
+            background: var(--bg-color); color: var(--text-main); font-size: 16px; text-align: center;
+            font-weight: 700; letter-spacing: 1px; outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+        }
+        .auth-input:focus { border-color: var(--wb-accent); box-shadow: 0 0 0 3px rgba(203, 17, 171, 0.15); }
+        .auth-btn {
+            width: 100%; background: var(--wb-gradient); color: #fff; border: none;
+            padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+        }
+        .auth-btn:hover { opacity: 0.95; }
+        .auth-btn:active { transform: scale(0.99); }
+        .auth-btn:disabled { opacity: 0.6; cursor: wait; }
+        .auth-error {
+            color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 10px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 600;
+            margin-top: 14px; display: none;
+        }
+
+        .container { 
+            display: none; flex-direction: column; flex-grow: 1;
+            width: 100%; max-width: 1440px; margin: 0 auto; 
+            animation: fadeIn 0.3s ease; 
+        }
+        
+        .content-padding { padding: 0 16px 24px 16px; display: flex; flex-direction: column; flex-grow: 1; }
+        @media (min-width: 768px) { .content-padding { padding: 0 40px 32px 40px; } }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* ШАПКА С УЧЕТОМ SAFE-AREA НА IPHONE */
+        .sticky-header {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--glass-header); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: calc(14px + env(safe-area-inset-top)) 16px 10px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        @media (min-width: 768px) { .sticky-header { padding: 22px 40px 12px 40px; } }
+
+        .header-area { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .header-title-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .header-area h1 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; letter-spacing: -0.3px; }
+        @media (min-width: 768px) { .header-area h1 { font-size: 26px; } }
+        
+        .user-pill {
+            font-size: 11px; font-weight: 700; color: var(--id-badge-text); background: var(--id-badge-bg);
+            border: 1px solid var(--id-badge-border); padding: 3px 9px; border-radius: 100px;
+            display: none; align-items: center; gap: 5px;
+        }
+        .user-pill.visible { display: inline-flex; }
+
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+
+        .icon-btn, .share-btn, .install-btn {
+            background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); 
+            border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+            height: 38px;
+        }
+        .icon-btn { width: 38px; font-size: 16px; padding: 0; }
+        .icon-btn:hover, .icon-btn.active-view { border-color: var(--wb-accent); color: var(--wb-accent); }
+        .share-btn, .install-btn { font-weight: 600; font-size: 13px; padding: 0 13px; gap: 6px; }
+        .share-btn:hover, .install-btn:hover { border-color: var(--wb-accent); color: var(--wb-accent); }
+        .install-btn { background: var(--id-badge-bg); border-color: var(--id-badge-border); color: var(--id-badge-text); }
+        @media (max-width: 540px) { .btn-text-hide { display: none; } .share-btn, .install-btn { width: 38px; padding: 0; } }
+
+        /* ПОИСК И ХОТКЕЙ-БЕЙДЖ */
+        .search-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+        .search-container { position: relative; flex-grow: 1; display: flex; align-items: center; min-width: 240px; }
+        .search-container svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px; pointer-events: none; }
+        .search-container input { width: 100%; padding: 11px 80px 11px 40px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 16px; outline: none; transition: border-color 0.2s; }
+        .search-container input:focus { border-color: var(--wb-accent); box-shadow: 0 0 0 2px rgba(203, 17, 171, 0.15); }
+        
+        .hotkey-hint {
+            position: absolute; right: 12px; background: var(--inner-box-bg); border: 1px solid var(--border-color);
+            color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px; pointer-events: none;
+        }
+        @media (max-width: 768px) { .hotkey-hint { display: none; } }
+
+        .clear-btn { position: absolute; right: 10px; background: var(--inner-box-bg); border: none; border-radius: 50%; color: var(--text-muted); font-size: 18px; cursor: pointer; display: none; width: 26px; height: 26px; align-items: center; justify-content: center; z-index: 2; }
+
+        .sort-select {
+            background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 0 12px; height: 42px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;
+        }
+        .sort-select:focus { border-color: var(--wb-accent); }
+
+        /* БЫСТРЫЕ ЧИПСЫ-ФИЛЬТРЫ */
+        .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .filter-chips::-webkit-scrollbar { display: none; }
+        .chip {
+            background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-muted);
+            padding: 5px 11px; border-radius: 100px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.15s;
+        }
+        .chip:hover { color: var(--text-main); border-color: var(--text-muted); }
+        .chip.active { background: var(--id-badge-bg); color: var(--id-badge-text); border-color: var(--id-badge-border); }
+
+        mark.highlight { background: var(--highlight-bg); color: inherit; border-radius: 3px; padding: 0 2px; }
+
+        /* ВКЛАДКИ */
+        .nav-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border-color); scrollbar-width: none; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        
+        .tab-button { 
+            background: transparent; border: none; outline: none; color: var(--text-muted); 
+            padding: 10px 12px; margin-bottom: -1px; border-bottom: 2px solid transparent; 
+            cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 13px; 
+            white-space: nowrap; display: flex; align-items: center; gap: 6px;
+        }
+        .tab-button:hover { color: var(--text-main); }
+        .tab-button.active { color: var(--text-main); border-bottom-color: var(--wb-accent); }
+        .tab-count { background: var(--border-color); color: var(--text-muted); padding: 2px 7px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+        .tab-button.active .tab-count { background: rgba(203, 17, 171, 0.15); color: var(--wb-accent); }
+
+        .offline-badge {
+            background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: none;
+        }
+        .offline-badge.visible { display: inline-block; }
+
+        /* KPI ДАШБОРД НАД СЕТКОЙ */
+        .kpi-bar {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+            margin-top: 16px;
+        }
+        .kpi-item {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 10px 14px; display: flex; flex-direction: column;
+        }
+        .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .kpi-val { font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 2px; }
+
+        /* СЕТКА КАРТОЧЕК */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; padding-top: 16px; width: 100%; }
+
+        .card { 
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; 
+            padding: 18px; display: flex; flex-direction: column; 
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            position: relative; overflow: hidden; cursor: pointer; outline: none;
+        }
+        .card:focus-visible { border-color: var(--wb-accent); box-shadow: 0 0 0 2px var(--wb-accent); }
+        .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background-color: var(--card-status-color, #10b981); }
+        
+        .card.status-green { --card-status-color: #10b981; }
+        .card.status-red { --card-status-color: #ef4444; }
+        .card.status-yellow { --card-status-color: #f59e0b; }
+
+        @media (hover: hover) {
+            .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--border-hover); }
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+        .card-title-group { display: flex; flex-direction: column; gap: 6px; max-width: 86%; }
+        .card h3 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.3; color: var(--text-main); }
+        
+        .id-badges-container { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 2px; }
+        .warehouse-id-badge { 
+            display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; 
+            color: var(--id-badge-text); background: var(--id-badge-bg); border: 1px solid var(--id-badge-border);
+            padding: 2px 8px; border-radius: 6px; cursor: copy; transition: transform 0.15s;
+        }
+        .warehouse-id-badge:hover { transform: scale(1.05); }
+        .warehouse-id-badge:active { transform: scale(0.95); }
+
+        .fav-btn { background: transparent; border: none; cursor: pointer; font-size: 22px; color: var(--text-muted); opacity: 0.6; transition: all 0.2s; padding: 2px 6px; outline: none; }
+        .fav-btn:hover { opacity: 1; transform: scale(1.1); color: #f59e0b; }
+        .fav-btn.active { color: #f59e0b; opacity: 1; }
+
+        .tags-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+        .tag { border: 1px solid transparent; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .tag-type { background: var(--tag-type-bg); color: var(--tag-type-text); border-color: var(--tag-type-border); }
+        .tag-ownership { background: var(--tag-bg); color: var(--tag-text); border-color: var(--border-color); }
+        .tag-active { background: var(--tag-active-bg); color: var(--tag-active-text); border-color: var(--tag-active-border); }
+        .tag-warning { background: var(--tag-warning-bg); color: var(--tag-warning-text); border-color: var(--tag-warning-border); }
+        .tag-info { background: var(--tag-info-bg); color: var(--tag-info-text); border-color: var(--tag-info-border); }
+
+        .specs-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; 
+            background: var(--inner-box-bg); padding: 11px; border-radius: 12px; 
+            margin-bottom: 12px; border: 1px solid var(--border-color); 
+        }
+        .spec-item { display: flex; flex-direction: column; font-size: 12px; }
+        .spec-item.full-width { grid-column: 1 / -1; }
+        .spec-label { color: var(--text-muted); font-size: 11px; margin-bottom: 2px; font-weight: 500; }
+        .spec-value { font-weight: 700; color: var(--text-main); line-height: 1.3; }
+
+        .address-box { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px; display: flex; gap: 6px; align-items: flex-start; }
+        .address-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+        .card-footer { border-top: 1px solid var(--border-color); padding-top: 11px; display: flex; justify-content: space-between; align-items: center; margin-top: auto; gap: 8px; }
+        .status-badge { display: flex; align-items: center; font-size: 12px; font-weight: 700; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; flex-shrink: 0; }
+        .status-green .dot { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .status-red .dot { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+        .status-yellow .dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+
+        .footer-btns { display: flex; gap: 6px; align-items: center; }
+        .coords-copy-btn {
+            background: var(--inner-box-bg); border: 1px solid var(--border-color); color: var(--text-muted);
+            padding: 6px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: copy; transition: all 0.15s;
+        }
+        .coords-copy-btn:hover { color: var(--text-main); border-color: var(--wb-accent); }
+        .route-btn { display: inline-flex; align-items: center; gap: 5px; background: var(--wb-gradient); color: white; border: none; padding: 6px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; transition: opacity 0.2s; flex-shrink: 0; }
+        .route-btn:hover { opacity: 0.9; }
+
+        /* КОМПАКТНЫЙ ТАБЛИЧНЫЙ ВИД ДЛЯ ПК / ПЛАНШЕТОВ */
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--card-bg); }
+        table.compact-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        table.compact-table th { background: var(--inner-box-bg); color: var(--text-muted); font-weight: 700; padding: 12px 14px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 11px; text-transform: uppercase; }
+        table.compact-table td { padding: 11px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        table.compact-table tr:last-child td { border-bottom: none; }
+        table.compact-table tr:hover { background: var(--inner-box-bg); cursor: pointer; }
+
+        /* ПОЛЕЗНЫЕ ТАБЛИЦЫ */
+        .link-card {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 20px; display: flex; flex-direction: column; text-decoration: none; color: inherit;
+            transition: all 0.2s ease;
+        }
+        .link-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--wb-accent); }
+        .link-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .link-card-icon { font-size: 26px; }
+        .link-card h3 { margin: 0; font-size: 17px; font-weight: 800; color: var(--text-main); }
+        .link-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; flex-grow: 1; }
+        .link-card-action { font-size: 13px; font-weight: 700; color: var(--wb-accent); margin-top: auto; }
+
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 50px 20px; display: flex; flex-direction: column; align-items: center; }
+        .footer-copyright { text-align: center; margin-top: auto; padding-top: 32px; padding-bottom: 16px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); opacity: 0.5; }
+
+        #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-color); padding: 11px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 6000; white-space: nowrap; }
+        #toast.show { bottom: calc(28px + env(safe-area-inset-bottom)); }
+
+        /* МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ СВАЙПА НА IPHONE */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.25s ease; }
+        .modal-overlay.active { opacity: 1; }
+
+        .modal-bottom {
+            position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--card-bg);
+            border-radius: 22px 22px 0 0; padding: 12px 20px calc(24px + env(safe-area-inset-bottom)) 20px; z-index: 2001;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            max-height: 88vh; overflow-y: auto; box-shadow: 0 -8px 30px rgba(0,0,0,0.45); border-top: 1px solid var(--border-color);
+        }
+        .modal-bottom.active { transform: translateY(0); }
+        .swipe-pill { width: 40px; height: 5px; background: var(--border-color); border-radius: 10px; margin: 0 auto 14px auto; }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 18px; font-weight: 800; margin: 0; }
+        .close-modal { background: var(--inner-box-bg); border: 1px solid var(--border-color); color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .modal-nav-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .modal-nav-btn {
+            background: var(--inner-box-bg); border: 1px solid var(--border-color); color: var(--text-main);
+            padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 6px; transition: border-color 0.2s;
+        }
+        .modal-nav-btn:hover { border-color: var(--wb-accent); }
+
+        .modal-content-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .modal-list-item { background: var(--inner-box-bg); padding: 10px 14px; border-radius: 11px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 12px; cursor: copy; transition: border-color 0.15s; }
+        .modal-list-item:hover { border-color: var(--wb-accent); }
+        .modal-list-title { font-size: 12px; color: var(--text-muted); }
+        .modal-list-value { font-size: 13.5px; font-weight: 700; color: var(--text-main); text-align: right; word-break: break-word; max-width: 65%; }
+        
+        .btn-copy-big { width: 100%; background: var(--wb-gradient); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+        @media (min-width: 768px) {
+            .swipe-pill { display: none; }
+            .modal-bottom { max-width: 480px; left: 50%; right: auto; margin-left: -240px; border-radius: 20px; padding: 24px; bottom: 50%; transform: translateY(50%) scale(0.92); opacity: 0; pointer-events: none; }
+            .modal-bottom.active { transform: translateY(50%) scale(1); opacity: 1; pointer-events: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ЭКРАН ЗАЩИЩЕННОГО ВХОДА (ПОКАЗЫВАЕТСЯ ТОЛЬКО ПРИ ПЕРВОМ ВХОДЕ ИЛИ БЛОКИРОВКЕ) -->
+<div id="authOverlay">
+    <div class="auth-box">
+        <div class="auth-logo">🏬</div>
+        <h2>Доступ к Навигатору</h2>
+        <p>Введите ваш персональный код доступа один раз. После входа приложение запомнит ваше устройство.</p>
+        <input type="password" id="pinInput" class="auth-input" placeholder="Персональный код" autocomplete="off">
+        <button type="button" id="loginBtn" class="auth-btn">Войти в систему</button>
+        <div id="authError" class="auth-error">Неверный код доступа</div>
+    </div>
+</div>
+
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС НАВИГАТОРА -->
+<div class="container" id="appContainer">
+    <div class="sticky-header">
+        <div class="header-area">
+            <div class="header-title-wrap">
+                <h1>🏬 Навигатор по складам <span id="offlineBadge" class="offline-badge">Оффлайн кэш</span></h1>
+                <span id="userBadge" class="user-pill">👤 <span id="userNameText"></span></span>
+            </div>
+            <div class="header-actions">
+                <button class="install-btn" id="installAppBtn" title="Установить на устройство"><span>📲</span><span class="btn-text-hide">Установить</span></button>
+                <button class="icon-btn" id="viewToggleBtn" title="Вид: Плитка / Таблица" aria-label="Переключить вид">📋</button>
+                <button class="icon-btn" id="refreshBtn" title="Обновить базу" aria-label="Обновить данные">🔄</button>
+                <button class="icon-btn" id="themeIcon" title="Сменить тему" aria-label="Переключить тему">☀️</button>
+                <button class="share-btn" id="shareAppBtn"><span>📤</span><span class="btn-text-hide">Поделиться</span></button>
+                <button class="icon-btn" id="logoutBtn" title="Сменить код доступа / Выйти" aria-label="Выйти">🚪</button>
+            </div>
+        </div>
+
+        <div class="search-row">
+            <div class="search-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Поиск по складам, ID, адресу, воротам..." aria-label="Поиск по складам">
+                <span class="hotkey-hint" id="hotkeyHint">Ctrl+Q /</span>
+                <button id="clearSearchBtn" class="clear-btn" aria-label="Очистить поиск">&times;</button>
+            </div>
+            <select id="sortSelect" class="sort-select" aria-label="Сортировка">
+                <option value="default">По умолчанию</option>
+                <option value="area_desc">Площадь ЛО ↓</option>
+                <option value="sgt_desc">Зона СГТ ↓</option>
+                <option value="gates_desc">Ворота СГТ ↓</option>
+                <option value="name_asc">По алфавиту А-Я</option>
+            </select>
+        </div>
+
+        <div class="filter-chips" id="chipsContainer">
+            <button class="chip active" data-chip="all">Все типы</button>
+            <button class="chip" data-chip="only_sgt">📦 Только СГТ</button>
+            <button class="chip" data-chip="sk_sgt">🏢 СК + СГТ</button>
+            <button class="chip" data-chip="sc_sgt">🔄 СЦ + СГТ</button>
+            <button class="chip" data-chip="fbo">✅ ФБО</button>
+            <button class="chip" data-chip="fbs">✅ ФБС</button>
+            <button class="chip" data-chip="brak">⚠️ Отдел Брака</button>
+            <button class="chip" data-chip="own">🔑 Собственные</button>
+        </div>
+
+        <nav class="nav-tabs" id="tabsContainer" role="tablist"></nav>
+    </div>
+
+    <div class="content-padding">
+        <div id="kpiBar" class="kpi-bar"></div>
+        <main id="contentArea" class="grid" role="main"></main>
+        <div class="footer-copyright">Designed specifically for Surovitsky</div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" aria-hidden="true"></div>
+<div class="modal-bottom" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="swipe-pill"></div>
+    <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Информация о складе</h3>
+        <button class="close-modal" aria-label="Закрыть">&times;</button>
+    </div>
+    <div class="modal-nav-actions" id="modalNavActions"></div>
+    <div class="modal-content-list" id="modalList" title="Нажмите на любую строку, чтобы скопировать значение"></div>
+    <button class="btn-copy-big" id="btnCopyMain">📋 Скопировать всю карточку</button>
+</div>
+
+<div id="toast" role="alert" aria-live="polite">Уведомление</div>
+
+<script>
+    // Защищенный серверный шлюз Google Apps Script (ID таблицы скрыт внутри сервера)
+    const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyMCh0VGP0g1joXiWupuO0qD3Jmr0HlQhCA3UWCIJgoaOxfUSpHra0nR_ef7AZ-c11f1w/exec';
+
+    const STORAGE_KEYS = {
+        authToken: 'wb_auth_token_v1',
+        authUser: 'wb_auth_user_v1',
+        favorites: 'wb_wh_favorites_v6',
+        theme: 'wb_theme_v1',
+        viewMode: 'wb_view_mode_v1',
+        cache: 'wb_wh_cache_sec_v1',
+        linksCache: 'wb_links_cache_sec_v1'
+    };
+
+    const HAS_STORAGE = (function() {
+        try {
+            const t = '__wb_test__';
+            localStorage.setItem(t, '1');
+            localStorage.removeItem(t);
+            return true;
+        } catch (e) { return false; }
+    })();
+
+    let warehousesData = [];
+    let linksData = [];
+    let favorites = [];
+    let currentTab = 'Все склады';
+    let currentChip = 'all';
+    let currentSort = 'default';
+    let viewMode = 'grid';
+    let currentMapSubMode = 'dynamic';
+    let yandexMapInstance = null;
+    let searchTimeout = null;
+    let rawTextToCopy = '';
+    let deferredInstallPrompt = null;
+    const memoryStore = {};
+
+    // Перехват события установки PWA для Android / ПК (Chrome, Edge)
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+    });
+
+    function initApp() {
+        favorites = safeGetJSON(STORAGE_KEYS.favorites, []);
+        if (!Array.isArray(favorites)) favorites = [];
+        viewMode = safeGetString(STORAGE_KEYS.viewMode, 'grid');
+        updateViewToggleIcon();
+        initTheme();
+        bindStaticEvents();
+
+        // Скрываем кнопку "Установить", если приложение уже запущено как отдельная программа (standalone)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (isStandalone) {
+            const instBtn = document.getElementById('installAppBtn');
+            if (instBtn) instBtn.style.display = 'none';
+        }
+
+        // Проверяем, передан ли код доступа прямо в ссылке (#pin=...)
+        if (window.location.hash.startsWith('#pin=')) {
+            const urlPin = decodeURIComponent(window.location.hash.replace('#pin=', '')).trim();
+            history.replaceState(null, '', window.location.pathname);
+            if (urlPin) {
+                safeSetString(STORAGE_KEYS.authToken, urlPin);
+            }
+        } else if (window.location.hash.startsWith('#search=')) {
+            const q = decodeURIComponent(window.location.hash.replace('#search=', ''));
+            const input = document.getElementById('searchInput');
+            if (input && q) {
+                input.value = q;
+                document.getElementById('clearSearchBtn').style.display = 'flex';
+                document.getElementById('hotkeyHint').style.display = 'none';
+            }
+        }
+
+        const savedToken = safeGetString(STORAGE_KEYS.authToken, '');
+        if (savedToken) {
+            showAppScreen();
+            const savedUser = safeGetString(STORAGE_KEYS.authUser, '');
+            if (savedUser) updateUserBadge(savedUser);
+            loadProtectedData(savedToken, false);
+        } else {
+            showLoginScreen();
+        }
+
+        // Обновление живых часов каждую минуту
+        setInterval(() => {
+            if (currentTab !== '🗺️ Карта сети' && currentTab !== 'Полезные таблицы') {
+                document.querySelectorAll('[data-tz]').forEach(el => {
+                    el.textContent = formatLiveTime(el.getAttribute('data-tz'));
+                });
+            }
+        }, 60000);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
+
+    function showLoginScreen(errorText = '') {
+        document.getElementById('appContainer').style.display = 'none';
+        const overlay = document.getElementById('authOverlay');
+        overlay.style.display = 'flex';
+        const errBox = document.getElementById('authError');
+        if (errorText) {
+            errBox.textContent = errorText;
+            errBox.style.display = 'block';
+        } else {
+            errBox.style.display = 'none';
+        }
+        setTimeout(() => {
+            const inp = document.getElementById('pinInput');
+            if (inp) inp.focus();
+        }, 50);
+    }
+
+    function showAppScreen() {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+    }
+
+    function updateUserBadge(userName) {
+        const badge = document.getElementById('userBadge');
+        const txt = document.getElementById('userNameText');
+        if (!badge || !txt) return;
+        if (userName) {
+            txt.textContent = userName;
+            badge.classList.add('visible');
+        } else {
+            badge.classList.remove('visible');
+        }
+    }
+
+    // Принудительная очистка токена и всего локального кэша при отзыве доступа в таблице
+    function wipeAllAccessAndCache(reasonMsg) {
+        try {
+            if (HAS_STORAGE) {
+                localStorage.removeItem(STORAGE_KEYS.authToken);
+                localStorage.removeItem(STORAGE_KEYS.authUser);
+                localStorage.removeItem(STORAGE_KEYS.cache);
+                localStorage.removeItem(STORAGE_KEYS.linksCache);
+            }
+        } catch (e) {}
+        delete memoryStore[STORAGE_KEYS.authToken];
+        delete memoryStore[STORAGE_KEYS.authUser];
+        delete memoryStore[STORAGE_KEYS.cache];
+        delete memoryStore[STORAGE_KEYS.linksCache];
+        warehousesData = [];
+        linksData = [];
+        updateUserBadge('');
+        showLoginScreen(reasonMsg || 'Доступ закрыт администратором. Кэш очищен.');
+    }
+
+    async function handleManualLogin() {
+        const input = document.getElementById('pinInput');
+        const btn = document.getElementById('loginBtn');
+        const errBox = document.getElementById('authError');
+        const pin = (input ? input.value : '').trim();
+
+        if (!pin) {
+            errBox.textContent = 'Введите ваш персональный код доступа';
+            errBox.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Проверка доступа...';
+        errBox.style.display = 'none';
+
+        try {
+            const resp = await fetch(`${GAS_ENDPOINT}?token=${encodeURIComponent(pin)}`, { method: 'GET', redirect: 'follow' });
+            const data = await resp.json();
+
+            if (data && data.ok) {
+                safeSetString(STORAGE_KEYS.authToken, pin);
+                safeSetString(STORAGE_KEYS.authUser, data.user || 'Сотрудник');
+                updateUserBadge(data.user || 'Сотрудник');
+                if (input) input.value = '';
+                showAppScreen();
+                applyServerPayload(data, false);
+                showToast(`👋 Добро пожаловать, ${data.user || 'коллега'}!`);
+            } else {
+                errBox.textContent = (data && data.error) ? data.error : 'Неверный код или доступ заблокирован';
+                errBox.style.display = 'block';
+            }
+        } catch (err) {
+            errBox.textContent = 'Ошибка соединения с сервером. Проверьте интернет.';
+            errBox.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Войти в систему';
+        }
+    }
+
+    async function loadProtectedData(token, isManual = false) {
+        // Сначала мгновенно показываем локальный кэш (если он есть), чтобы интерфейс открылся за 0.1 сек,
+        // а параллельно проверяем токен и обновляем базу с сервера
+        const cachedWh = safeGetJSON(STORAGE_KEYS.cache, null);
+        const cachedLinks = safeGetJSON(STORAGE_KEYS.linksCache, null);
+
+        if (cachedWh && cachedWh.length > 0 && !isManual) {
+            warehousesData = cachedWh;
+            linksData = cachedLinks || [];
+            renderTabs();
+            const searchInput = document.getElementById('searchInput');
+            renderCards(searchInput ? searchInput.value.trim() : '');
+        } else {
+            renderLoadingState();
+        }
+
+        try {
+            const resp = await fetch(`${GAS_ENDPOINT}?token=${encodeURIComponent(token)}`, { method: 'GET', redirect: 'follow' });
+            const data = await resp.json();
+
+            // Если администратор заблокировал или удалил код в таблице "Доступ" — стираем всё!
+            if (!data || !data.ok) {
+                if (data && data.revoked) {
+                    wipeAllAccessAndCache(data.error || 'Ваш доступ был отозван администратором.');
+                    return;
+                }
+                throw new Error((data && data.error) || 'Auth failed');
+            }
+
+            document.getElementById('offlineBadge').classList.remove('visible');
+            if (data.user) {
+                safeSetString(STORAGE_KEYS.authUser, data.user);
+                updateUserBadge(data.user);
+            }
+            applyServerPayload(data, isManual);
+        } catch (err) {
+            if (cachedWh && cachedWh.length > 0) {
+                warehousesData = cachedWh;
+                linksData = cachedLinks || [];
+                document.getElementById('offlineBadge').classList.add('visible');
+                renderTabs();
+                const searchInput = document.getElementById('searchInput');
+                renderCards(searchInput ? searchInput.value.trim() : '');
+                if (isManual) showToast('⚠️ Нет связи с сервером: работаем из оффлайн-кэша');
+            } else {
+                const container = document.getElementById('contentArea');
+                if (container) {
+                    container.innerHTML = `<div class="empty-state"><h3 style="color:#ef4444;">⚠️ Нет связи с базой</h3><p style="color:var(--text-muted);font-size:14px;">Проверьте подключение к интернету и нажмите кнопку обновления 🔄</p></div>`;
+                }
+            }
+        }
+    }
+
+    function applyServerPayload(data, isManual) {
+        if (data.warehouses) {
+            warehousesData = parseSheetTableStrict(data.warehouses);
+            safeSetJSON(STORAGE_KEYS.cache, warehousesData);
+        }
+        if (data.links) {
+            linksData = parseLinksTable(data.links);
+            safeSetJSON(STORAGE_KEYS.linksCache, linksData);
+        }
+
+        favorites = favorites.filter(favId => warehousesData.some(w => w.id === favId));
+        safeSetJSON(STORAGE_KEYS.favorites, favorites);
+
+        renderTabs();
+        const searchInput = document.getElementById('searchInput');
+        renderCards(searchInput ? searchInput.value.trim() : '');
+        if (isManual) showToast('✅ База складов обновлена');
+    }
+
+    // Расчет реального времени на складе относительно МСК (UTC+3)
+    function formatLiveTime(tzStr) {
+        if (!tzStr) return '';
+        let offsetFromMsk = 0;
+        const match = tzStr.match(/([+-]\s*\d+)/);
+        if (match) {
+            offsetFromMsk = parseInt(match[1].replace(/\s+/g, ''), 10) || 0;
+        }
+        const now = new Date();
+        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const targetDate = new Date(utcMs + ((3 + offsetFromMsk) * 3600000));
+        const hh = String(targetDate.getHours()).padStart(2, '0');
+        const mm = String(targetDate.getMinutes()).padStart(2, '0');
+        const label = offsetFromMsk === 0 ? 'МСК' : (offsetFromMsk > 0 ? `МСК+${offsetFromMsk}` : `МСК${offsetFromMsk}`);
+        return `🕒 ${hh}:${mm} (${label})`;
+    }
+
+    function bindStaticEvents() {
+        const loginBtn = document.getElementById('loginBtn');
+        const pinInput = document.getElementById('pinInput');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const installBtn = document.getElementById('installAppBtn');
+        const themeBtn = document.getElementById('themeIcon');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
+        const shareBtn = document.getElementById('shareAppBtn');
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const hotkeyHint = document.getElementById('hotkeyHint');
+        const sortSelect = document.getElementById('sortSelect');
+        const chipsContainer = document.getElementById('chipsContainer');
+        const copyBtn = document.getElementById('btnCopyMain');
+        const contentArea = document.getElementById('contentArea');
+        const tabsContainer = document.getElementById('tabsContainer');
+
+        if (loginBtn) loginBtn.addEventListener('click', handleManualLogin);
+        if (pinInput) {
+            pinInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleManualLogin();
+            });
+        }
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Выйти из текущей учетной записи и очистить сохраненный код доступа?')) {
+                    wipeAllAccessAndCache('Вы вышли из системы. Введите код для входа.');
+                }
+            });
+        }
+
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredInstallPrompt) {
+                    deferredInstallPrompt.prompt();
+                    await deferredInstallPrompt.userChoice;
+                    deferredInstallPrompt = null;
+                } else {
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    if (isIOS) {
+                        alert('📲 Установка на iPhone:\n\n1. Нажмите кнопку «Поделиться» (квадрат со стрелкой вверх внизу Safari).\n2. Выберите пункт «На экран „Домой“».\n\nИконка Навигатора появится на рабочем столе и будет открываться на весь экран без пароля!');
+                    } else {
+                        alert('📲 Установка приложения:\n\nНажмите на значок установки в правой части адресной строки браузера (или меню ⋮ ➔ «Установить приложение»).');
+                    }
+                }
+            });
+        }
+
+        if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                const token = safeGetString(STORAGE_KEYS.authToken, '');
+                if (token) loadProtectedData(token, true);
+                else showLoginScreen();
+            });
+        }
+        if (shareBtn) shareBtn.addEventListener('click', shareApp);
+
+        if (viewToggleBtn) {
+            viewToggleBtn.addEventListener('click', () => {
+                viewMode = viewMode === 'grid' ? 'table' : 'grid';
+                safeSetString(STORAGE_KEYS.viewMode, viewMode);
+                updateViewToggleIcon();
+                renderCards(searchInput ? searchInput.value.trim() : '');
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+                if (hotkeyHint) hotkeyHint.style.display = query.length > 0 ? 'none' : '';
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const trimmed = query.trim();
+                    if (trimmed) history.replaceState(null, '', '#search=' + encodeURIComponent(trimmed));
+                    else if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+                    renderCards(trimmed);
+                }, 150);
+            });
+        }
+
+        if (clearBtn) clearBtn.addEventListener('click', () => clearSearch(true));
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderCards(searchInput ? searchInput.value.trim() : '');
+            });
+        }
+
+        if (chipsContainer) {
+            chipsContainer.addEventListener('click', (e) => {
+                const chip = e.target.closest('.chip');
+                if (!chip) return;
+                currentChip = chip.dataset.chip;
+                chipsContainer.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.chip === currentChip));
+                renderCards(searchInput ? searchInput.value.trim() : '');
+            });
+        }
+
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                if (rawTextToCopy) copyToClipboard(rawTextToCopy, 'Вся карточка скопирована!');
+            });
+        }
+
+        if (tabsContainer) {
+            tabsContainer.addEventListener('click', (event) => {
+                const btn = event.target.closest('[data-tab]');
+                if (!btn) return;
+                currentTab = btn.dataset.tab;
+                renderTabs();
+                renderCards(searchInput ? searchInput.value.trim() : '');
+            });
+        }
+
+        if (contentArea) {
+            contentArea.addEventListener('click', (event) => {
+                const idBadge = event.target.closest('.warehouse-id-badge');
+                if (idBadge) {
+                    event.stopPropagation();
+                    const idVal = idBadge.getAttribute('data-copy-id');
+                    if (idVal) copyToClipboard(idVal, `Скопирован ID: ${idVal}`);
+                    return;
+                }
+
+                const coordsBtn = event.target.closest('.coords-copy-btn');
+                if (coordsBtn) {
+                    event.stopPropagation();
+                    const cVal = coordsBtn.getAttribute('data-coords');
+                    if (cVal) copyToClipboard(cVal, `Координаты скопированы: ${cVal}`);
+                    return;
+                }
+
+                const favBtn = event.target.closest('.fav-btn');
+                if (favBtn) {
+                    event.stopPropagation();
+                    toggleFavoriteById(favBtn.dataset.id);
+                    return;
+                }
+
+                const card = event.target.closest('[data-wh-id]');
+                if (card && !event.target.closest('a')) {
+                    const wh = warehousesData.find(w => w.id === card.getAttribute('data-wh-id'));
+                    if (wh) openModal(wh);
+                }
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('.close-modal') || event.target.id === 'modalOverlay') {
+                closeModal();
+            }
+        });
+
+        // Свайп вниз для закрытия модального окна на iPhone
+        const modal = document.getElementById('infoModal');
+        let touchStartY = 0;
+        if (modal) {
+            modal.addEventListener('touchstart', (e) => {
+                if (modal.scrollTop <= 0) touchStartY = e.touches[0].clientY;
+                else touchStartY = 0;
+            }, { passive: true });
+
+            modal.addEventListener('touchend', (e) => {
+                if (!touchStartY) return;
+                const diff = e.changedTouches[0].clientY - touchStartY;
+                if (diff > 75 && modal.scrollTop <= 0) closeModal();
+                touchStartY = 0;
+            }, { passive: true });
+        }
+
+        // Хоткеи для ПК: Ctrl+Q, '/', Escape и цифры 1-6
+        document.addEventListener('keydown', (event) => {
+            if (document.getElementById('authOverlay').style.display === 'flex') return;
+            const searchEl = document.getElementById('searchInput');
+            const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT');
+
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q') {
+                event.preventDefault();
+                if (searchEl) { searchEl.focus(); searchEl.select(); }
+                return;
+            }
+
+            if (event.key === '/' && !isInputFocused) {
+                event.preventDefault();
+                if (searchEl) searchEl.focus();
+                return;
+            }
+
+            if (!isInputFocused && ['1', '2', '3', '4', '5', '6'].includes(event.key)) {
+                const tabBtns = document.querySelectorAll('#tabsContainer .tab-button');
+                const idx = parseInt(event.key, 10) - 1;
+                if (tabBtns[idx]) tabBtns[idx].click();
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                const overlay = document.getElementById('modalOverlay');
+                if (overlay && overlay.classList.contains('active')) {
+                    closeModal();
+                } else if (document.activeElement === searchEl) {
+                    clearSearch(true);
+                    searchEl.blur();
+                }
+            }
+        });
+    }
+
+    function updateViewToggleIcon() {
+        const btn = document.getElementById('viewToggleBtn');
+        if (!btn) return;
+        btn.textContent = viewMode === 'grid' ? '📋' : '🎴';
+        btn.classList.toggle('active-view', viewMode === 'table');
+    }
+
+    function safeGetJSON(key, fallback) {
+        try {
+            if (HAS_STORAGE) {
+                const raw = localStorage.getItem(key);
+                return raw ? JSON.parse(raw) : fallback;
+            }
+        } catch (e) {}
+        return key in memoryStore ? memoryStore[key] : fallback;
+    }
+
+    function safeSetJSON(key, value) {
+        try {
+            if (HAS_STORAGE) {
+                localStorage.setItem(key, JSON.stringify(value));
+                return;
+            }
+        } catch (e) {}
+        memoryStore[key] = value;
+    }
+
+    function safeGetString(key, fallback = '') {
+        try {
+            if (HAS_STORAGE) return localStorage.getItem(key) || fallback;
+        } catch (e) {}
+        return key in memoryStore ? memoryStore[key] : fallback;
+    }
+
+    function safeSetString(key, value) {
+        try {
+            if (HAS_STORAGE) {
+                localStorage.setItem(key, value);
+                return;
+            }
+        } catch (e) {}
+        memoryStore[key] = value;
+    }
+
+    function initTheme() {
+        const saved = safeGetString(STORAGE_KEYS.theme, '');
+        if (saved === 'light' || saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', saved);
+        }
+        updateThemeIcon();
+    }
+
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        const next = cur === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        safeSetString(STORAGE_KEYS.theme, next);
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+        const btn = document.getElementById('themeIcon');
+        if (!btn) return;
+        btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️';
+    }
+
+    function hashString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash).toString(36);
+    }
+
+    function normalizeKeyPart(val) {
+        return String(val || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function makeStableWarehouseId(title, ids, address) {
+        const base = [normalizeKeyPart(title), (ids || []).join('|'), normalizeKeyPart(address)].join('::');
+        return 'wh_' + hashString(base);
+    }
+
+    function getCellValue(row, colIndex) {
+        if (!row || !row.c || colIndex < 0 || colIndex >= row.c.length || !row.c[colIndex] || row.c[colIndex].v == null) {
+            return '';
+        }
+        return String(row.c[colIndex].v);
+    }
+
+    function cleanNumberStr(val) {
+        return String(val || '').trim().replace(/\.0+$/, '');
+    }
+
+    function normalizeMaybeEmpty(val) {
+        if (!val) return '';
+        const cleaned = cleanNumberStr(val);
+        const lower = cleaned.toLowerCase();
+        if (cleaned === '' || lower === 'n/a' || cleaned === '-' || cleaned === '---' || cleaned === '- - -') return '';
+        return cleaned;
+    }
+
+    function parseNum(str) {
+        if (!str) return 0;
+        const cleaned = String(str).replace(/\s+/g, '').replace(',', '.');
+        const m = cleaned.match(/(\d+(?:\.\d+)?)/);
+        return m ? parseFloat(m[1]) : 0;
+    }
+
+    function parseSheetTableStrict(tableData) {
+        const rows = tableData.rows || [];
+        if (rows.length === 0) return [];
+        const parsed = [];
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row.c) continue;
+
+            let rawTitle = getCellValue(row, 1).trim();
+            if (!rawTitle || rawTitle.toLowerCase() === 'склад') continue;
+
+            let ids = [];
+            const titleIdMatches = rawTitle.match(/\((?:ID:\s*)?(\d+)\)/gi);
+            if (titleIdMatches) {
+                titleIdMatches.forEach(m => {
+                    const digits = m.replace(/\D/g, '');
+                    if (digits && !ids.includes(digits)) ids.push(digits);
+                });
+            }
+
+            let title = rawTitle
+                .replace(/\s*\((?:ID:\s*)?\d+\)\s*/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            [2, 3, 4, 5].forEach(idx => {
+                const val = normalizeMaybeEmpty(getCellValue(row, idx));
+                if (val && !ids.includes(val)) ids.push(val);
+            });
+
+            const whTypeCode = normalizeMaybeEmpty(getCellValue(row, 6));
+            const routerStatus = normalizeMaybeEmpty(getCellValue(row, 7));
+            const statusRaw = normalizeMaybeEmpty(getCellValue(row, 8));
+            const comment = normalizeMaybeEmpty(getCellValue(row, 9));
+            const sharedArea = normalizeMaybeEmpty(getCellValue(row, 10));
+            const timeZone = normalizeMaybeEmpty(getCellValue(row, 11));
+
+            const fbs = getCellValue(row, 12).toLowerCase().includes('да');
+            const fbsGates = normalizeMaybeEmpty(getCellValue(row, 13));
+
+            const fbo = getCellValue(row, 14).toLowerCase().includes('да');
+            const fboGates = normalizeMaybeEmpty(getCellValue(row, 15));
+
+            const brak = getCellValue(row, 16).toLowerCase().includes('да');
+
+            const type = normalizeMaybeEmpty(getCellValue(row, 17));
+            const ownership = normalizeMaybeEmpty(getCellValue(row, 18));
+
+            const rawArea = normalizeMaybeEmpty(getCellValue(row, 19));
+            const areaNum = parseNum(rawArea);
+            let area = rawArea;
+            if (area && !area.toLowerCase().includes('кв')) area += ' кв.м';
+
+            const rawFloor = normalizeMaybeEmpty(getCellValue(row, 20));
+            let floorArea = rawFloor;
+            if (floorArea && !floorArea.toLowerCase().includes('кв')) floorArea += ' кв.м';
+
+            const rawSgt = normalizeMaybeEmpty(getCellValue(row, 21));
+            const sgtNum = parseNum(rawSgt);
+            let sgtArea = rawSgt;
+            if (sgtArea && !sgtArea.toLowerCase().includes('кв')) sgtArea += ' кв.м';
+
+            const rawGates = normalizeMaybeEmpty(getCellValue(row, 22));
+            const gatesNum = parseNum(rawGates);
+            let gates = rawGates;
+            if (gates && !gates.toLowerCase().includes('ворот')) gates += ' Ворот';
+
+            const address = normalizeMaybeEmpty(getCellValue(row, 23));
+            const coords = normalizeMaybeEmpty(getCellValue(row, 24)).replace(/\.$/, '').trim();
+
+            const statusLower = statusRaw.toLowerCase();
+            let statusColor = 'red';
+            let statusText = statusRaw || 'Закрыт';
+
+            if (statusLower === 'активен' || (statusLower.includes('актив') && !statusLower.includes('не'))) {
+                statusColor = 'green';
+                statusText = 'Активен';
+            } else if (statusLower.includes('ож') || statusLower.includes('отлож')) {
+                statusColor = 'yellow';
+                statusText = statusRaw;
+            } else {
+                statusColor = 'red';
+                statusText = statusRaw || 'Закрыт';
+            }
+
+            const whId = makeStableWarehouseId(title, ids, address);
+            const searchIndex = [
+                title, ids.join(' '), address, coords, area, sgtArea, gates,
+                sharedArea, timeZone, type, ownership, statusText, routerStatus, comment
+            ].join(' ').toLowerCase();
+
+            parsed.push({
+                id: whId, title, ids, whTypeCode, routerStatus, statusText, statusColor,
+                comment, sharedArea, timeZone, fbs, fbsGates, fbo, fboGates, brak,
+                type, ownership, area, areaNum, floorArea, sgtArea, sgtNum, gates, gatesNum, address, coords, searchIndex
+            });
+        }
+        return parsed;
+    }
+
+    function parseLinksTable(tableData) {
+        const rows = tableData.rows || [];
+        if (rows.length === 0) return [];
+        const parsed = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || !row.c) continue;
+
+            const title = getCellValue(row, 0).trim();
+            if (!title || title.toLowerCase() === 'название') continue;
+
+            const desc = getCellValue(row, 1).trim();
+            const url = getCellValue(row, 2).trim();
+            const icon = getCellValue(row, 3).trim() || '📊';
+
+            if (url) {
+                parsed.push({
+                    title, desc, url, icon,
+                    searchIndex: (title + ' ' + desc).toLowerCase()
+                });
+            }
+        }
+        return parsed;
+    }
+
+    function renderLoadingState() {
+        const container = document.getElementById('contentArea');
+        if (!container) return;
+        container.innerHTML = `<div class="empty-state"><span style="font-size:42px;display:inline-block;animation:spin 1.5s linear infinite;margin-bottom:10px;">⏳</span><h3>Синхронизация защищенной базы...</h3></div>`;
+    }
+
+    function clearSearch(doRender = true) {
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const hotkeyHint = document.getElementById('hotkeyHint');
+        if (searchInput) searchInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (hotkeyHint) hotkeyHint.style.display = '';
+        if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+        if (doRender) renderCards('');
+    }
+
+    function renderTabs() {
+        const container = document.getElementById('tabsContainer');
+        if (!container) return;
+        container.textContent = '';
+        
+        const createTab = (name, count, isActive) => {
+            const btn = document.createElement('button');
+            btn.className = 'tab-button' + (isActive ? ' active' : '');
+            btn.dataset.tab = name;
+            btn.setAttribute('role', 'tab');
+            
+            btn.appendChild(document.createTextNode(name + ' '));
+            if (count !== null) {
+                const span = document.createElement('span');
+                span.className = 'tab-count';
+                span.textContent = count;
+                btn.appendChild(span);
+            }
+            return btn;
+        };
+
+        const activeCount = warehousesData.filter(w => w.statusColor === 'green').length;
+        const inactiveCount = warehousesData.filter(w => w.statusColor !== 'green').length;
+        const mapCount = warehousesData.filter(w => w.coords && w.coords.includes(',')).length;
+
+        container.appendChild(createTab('Все склады', warehousesData.length, currentTab === 'Все склады'));
+        container.appendChild(createTab('🟢 Активные', activeCount, currentTab === '🟢 Активные'));
+        container.appendChild(createTab('🔴 Закрытые', inactiveCount, currentTab === '🔴 Закрытые'));
+        container.appendChild(createTab('⭐ Избранное', favorites.length, currentTab === '⭐ Избранное'));
+        container.appendChild(createTab('🗺️ Карта сети', mapCount, currentTab === '🗺️ Карта сети'));
+        container.appendChild(createTab('Полезные таблицы', linksData.length, currentTab === 'Полезные таблицы'));
+    }
+
+    function createHighlightedFragment(text, query) {
+        const fragment = document.createDocumentFragment();
+        const safeText = String(text || '');
+        if (!query) {
+            fragment.appendChild(document.createTextNode(safeText));
+            return fragment;
+        }
+        const escapedQuery = query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(escapedQuery, 'ig');
+        let lastIndex = 0, match;
+        while ((match = regex.exec(safeText)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(safeText.substring(lastIndex, match.index)));
+            }
+            const mark = document.createElement('mark');
+            mark.className = 'highlight';
+            mark.textContent = match[0];
+            fragment.appendChild(mark);
+            lastIndex = regex.lastIndex;
+        }
+        if (lastIndex < safeText.length) {
+            fragment.appendChild(document.createTextNode(safeText.substring(lastIndex)));
+        }
+        return fragment;
+    }
+
+    function filterAndSortWarehouses(query) {
+        const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+        let list = warehousesData.filter(wh => {
+            if (currentTab === '⭐ Избранное' && !favorites.includes(wh.id)) return false;
+            if (currentTab === '🟢 Активные' && wh.statusColor !== 'green') return false;
+            if (currentTab === '🔴 Закрытые' && wh.statusColor === 'green') return false;
+
+            if (currentChip === 'only_sgt' && wh.type !== 'СГТ') return false;
+            if (currentChip === 'sk_sgt' && wh.type !== 'СК + СГТ') return false;
+            if (currentChip === 'sc_sgt' && wh.type !== 'СЦ + СГТ') return false;
+            if (currentChip === 'fbo' && !wh.fbo) return false;
+            if (currentChip === 'fbs' && !wh.fbs) return false;
+            if (currentChip === 'brak' && !wh.brak) return false;
+            if (currentChip === 'own' && !wh.ownership.toLowerCase().includes('собств')) return false;
+
+            if (searchTerms.length > 0) return searchTerms.every(term => wh.searchIndex.includes(term));
+            return true;
+        });
+
+        if (currentSort === 'area_desc') list.sort((a, b) => b.areaNum - a.areaNum);
+        else if (currentSort === 'sgt_desc') list.sort((a, b) => b.sgtNum - a.sgtNum);
+        else if (currentSort === 'gates_desc') list.sort((a, b) => b.gatesNum - a.gatesNum);
+        else if (currentSort === 'name_asc') list.sort((a, b) => a.title.localeCompare(b.title, 'ru'));
+
+        return list;
+    }
+
+    function renderKpiBar(filtered) {
+        const kpiBar = document.getElementById('kpiBar');
+        if (!kpiBar) return;
+        if (currentTab === 'Полезные таблицы') {
+            kpiBar.style.display = 'none';
+            return;
+        }
+        kpiBar.style.display = 'grid';
+
+        const activeInSelection = filtered.filter(w => w.statusColor === 'green').length;
+        const totalArea = filtered.reduce((acc, w) => acc + (w.areaNum || 0), 0);
+        const totalSgt = filtered.reduce((acc, w) => acc + (w.sgtNum || 0), 0);
+        const totalGates = filtered.reduce((acc, w) => acc + (w.gatesNum || 0), 0);
+
+        kpiBar.innerHTML = `
+            <div class="kpi-item"><span class="kpi-label">Объектов в выборке</span><span class="kpi-val">${filtered.length} <span style="font-size:12px;color:#10b981;font-weight:700;">(${activeInSelection} акт.)</span></span></div>
+            <div class="kpi-item"><span class="kpi-label">Общая площадь ЛО</span><span class="kpi-val">${totalArea.toLocaleString('ru-RU')} м²</span></div>
+            <div class="kpi-item"><span class="kpi-label">Зона СГТ суммарно</span><span class="kpi-val">${totalSgt.toLocaleString('ru-RU')} м²</span></div>
+            <div class="kpi-item"><span class="kpi-label">Всего ворот СГТ</span><span class="kpi-val">${totalGates.toLocaleString('ru-RU')}</span></div>
+        `;
+    }
+
+    function getConstructorEmbedUrl() {
+        const defaultUm = 'constructor%3Abaac090cd030b1c4fa84e4805051aec0e78ac981d19f7a237f599af6563c0754';
+        const mapRow = linksData.find(l => 
+            l.title.toLowerCase().includes('карта') || 
+            l.url.includes('um=constructor') || 
+            l.url.includes('map-widget')
+        );
+        if (!mapRow || !mapRow.url) {
+            return `https://yandex.ru/map-widget/v1/?um=${defaultUm}&source=constructor`;
+        }
+        const rawUrl = mapRow.url.trim();
+        if (rawUrl.includes('map-widget/v1')) return rawUrl;
+
+        const match = rawUrl.match(/um=([^&]+)/);
+        if (match && match[1]) {
+            return `https://yandex.ru/map-widget/v1/?um=${match[1]}&source=constructor`;
+        }
+        return rawUrl;
+    }
+
+    function renderMapView(filtered) {
+        const container = document.getElementById('contentArea');
+        container.className = '';
+
+        container.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:16px; margin-bottom:10px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="chip ${currentMapSubMode === 'dynamic' ? 'active' : ''}" id="btnMapDynamic">
+                        🟢 Живые статусы из таблицы (${filtered.length})
+                    </button>
+                    <button type="button" class="chip ${currentMapSubMode === 'constructor' ? 'active' : ''}" id="btnMapConstructor">
+                        📐 Схема из Конструктора (по ссылке)
+                    </button>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted);">
+                    ${currentMapSubMode === 'dynamic' 
+                        ? 'Цвет меток меняется автоматически по столбцу «Статус ЛО»' 
+                        : 'Ссылка берется из вкладки «Таблицы» (строка «Карта сети»)'}
+                </div>
+            </div>
+            <div id="mapContainer" style="width:100%; height:68vh; min-height:430px; border-radius:16px; border:1px solid var(--border-color); overflow:hidden; position:relative; background:var(--card-bg);"></div>
+        `;
+
+        document.getElementById('btnMapDynamic').onclick = () => {
+            currentMapSubMode = 'dynamic';
+            renderMapView(filtered);
+        };
+        document.getElementById('btnMapConstructor').onclick = () => {
+            currentMapSubMode = 'constructor';
+            renderMapView(filtered);
+        };
+
+        const mapBox = document.getElementById('mapContainer');
+
+        if (currentMapSubMode === 'constructor') {
+            if (yandexMapInstance) { yandexMapInstance.destroy(); yandexMapInstance = null; }
+            const embedUrl = getConstructorEmbedUrl();
+            mapBox.innerHTML = `
+                <iframe 
+                    src="${embedUrl}" 
+                    width="100%" 
+                    height="100%" 
+                    frameborder="0" 
+                    allowfullscreen="true" 
+                    style="position:absolute; top:0; left:0;">
+                </iframe>
+            `;
+            return;
+        }
+
+        if (!window.ymaps) {
+            mapBox.innerHTML = '<div class="empty-state"><h3>Загрузка Яндекс.Карт...</h3></div>';
+            return;
+        }
+
+        ymaps.ready(() => {
+            if (yandexMapInstance) { yandexMapInstance.destroy(); yandexMapInstance = null; }
+
+            yandexMapInstance = new ymaps.Map('mapContainer', {
+                center: [55.75, 37.61],
+                zoom: 5,
+                controls: ['zoomControl', 'fullscreenControl', 'typeSelector']
+            });
+
+            const collection = new ymaps.GeoObjectCollection();
+
+            filtered.forEach(wh => {
+                if (!wh.coords) return;
+                const parts = wh.coords.split(',').map(s => parseFloat(s.trim()));
+                if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+
+                let preset = 'islands#redDotIcon';
+                if (wh.statusColor === 'green') preset = 'islands#greenDotIcon';
+                else if (wh.statusColor === 'yellow') preset = 'islands#yellowDotIcon';
+
+                const idsText = wh.ids.length ? `ID: ${wh.ids.join(', ')}` : '';
+                const placemark = new ymaps.Placemark(parts, {
+                    balloonContentHeader: `<b>${wh.title}</b>`,
+                    balloonContentBody: `
+                        <div style="font-size:12px; line-height:1.5;">
+                            <div style="color:#cb11ab; font-weight:700;">${idsText} • ${wh.statusText}</div>
+                            <div>Площадь ЛО: <b>${wh.area || '—'}</b> | Ворота СГТ: <b>${wh.gates || '—'}</b></div>
+                            <div style="color:#64748b; margin-top:4px;">${wh.address || ''}</div>
+                            <div style="margin-top:8px;">
+                                <a href="https://yandex.ru/maps/?text=${encodeURIComponent(wh.coords)}" target="_blank" style="background:#cb11ab; color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">🗺️ Построить маршрут</a>
+                            </div>
+                        </div>
+                    `,
+                    hintContent: `${wh.title} (${wh.statusText})`
+                }, {
+                    preset: preset
+                });
+
+                collection.add(placemark);
+            });
+
+            yandexMapInstance.geoObjects.add(collection);
+
+            if (collection.getLength() > 0) {
+                yandexMapInstance.setBounds(collection.getBounds(), { checkZoomRange: true, zoomMargin: 35 });
+            }
+        });
+    }
+
+    function renderTableView(filtered, query) {
+        const container = document.getElementById('contentArea');
+        container.className = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrapper';
+
+        const table = document.createElement('table');
+        table.className = 'compact-table';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Статус</th>
+                    <th>Склад</th>
+                    <th>ID Блоков (клик = копия)</th>
+                    <th>Формат</th>
+                    <th>Время</th>
+                    <th>Площадь ЛО</th>
+                    <th>Зона СГТ</th>
+                    <th>Ворота СГТ</th>
+                    <th>ФБО / ФБС</th>
+                    <th>Навигация</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+        const tbody = table.querySelector('tbody');
+
+        filtered.forEach(wh => {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-wh-id', wh.id);
+
+            const idsHtml = wh.ids.map(idVal => `<span class="warehouse-id-badge" data-copy-id="${idVal}">ID: ${idVal}</span>`).join(' ');
+            const fboFbs = [
+                wh.fbo ? `ФБО${wh.fboGates ? ' ('+wh.fboGates+')' : ''}` : '',
+                wh.fbs ? `ФБС${wh.fbsGates ? ' ('+wh.fbsGates+')' : ''}` : ''
+            ].filter(Boolean).join(' / ') || '—';
+
+            const dotColor = wh.statusColor === 'green' ? '#10b981' : (wh.statusColor === 'yellow' ? '#f59e0b' : '#ef4444');
+            const mapQuery = encodeURIComponent(wh.coords || wh.address || wh.title);
+
+            tr.innerHTML = `
+                <td><span style="display:inline-flex;align-items:center;font-weight:700;font-size:12px;"><span style="width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:6px;"></span>${wh.statusText}</span></td>
+                <td style="font-weight:800;">${wh.title}</td>
+                <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${idsHtml}</div></td>
+                <td><span class="tag tag-type">${wh.type || '—'}</span></td>
+                <td style="white-space:nowrap;font-size:12px;" data-tz="${wh.timeZone}">${formatLiveTime(wh.timeZone) || '—'}</td>
+                <td style="font-weight:700;">${wh.area || '—'}</td>
+                <td style="font-weight:700;">${wh.sgtArea || '—'}</td>
+                <td style="font-weight:700;">${wh.gates || '—'}</td>
+                <td style="font-size:12px;">${fboFbs}</td>
+                <td><a href="https://yandex.ru/maps/?text=${mapQuery}" target="_blank" class="route-btn" onclick="event.stopPropagation()">🗺️</a></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        wrapper.appendChild(table);
+        container.innerHTML = '';
+        container.appendChild(wrapper);
+    }
+
+    function renderCards(query = '') {
+        const container = document.getElementById('contentArea');
+        if (!container) return;
+
+        if (currentTab === 'Полезные таблицы') {
+            renderKpiBar([]);
+            container.className = 'grid';
+            const searchTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+            const filteredLinks = linksData.filter(link => searchTerms.every(term => link.searchIndex.includes(term)));
+
+            if (filteredLinks.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>Таблицы не найдены</h3></div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            filteredLinks.forEach(item => {
+                const a = document.createElement('a');
+                a.className = 'link-card';
+                a.href = item.url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.innerHTML = `
+                    <div class="link-card-header"><span class="link-card-icon">${item.icon}</span><h3>${item.title}</h3></div>
+                    <div class="link-card-desc">${item.desc}</div>
+                    <div class="link-card-action">Открыть ↗</div>
+                `;
+                fragment.appendChild(a);
+            });
+            container.textContent = '';
+            container.appendChild(fragment);
+            return;
+        }
+
+        const filtered = filterAndSortWarehouses(query);
+        renderKpiBar(filtered);
+
+        if (currentTab === '🗺️ Карта сети') {
+            renderMapView(filtered);
+            return;
+        }
+
+        if (filtered.length === 0) {
+            container.className = 'grid';
+            container.innerHTML = `<div class="empty-state"><span style="font-size:40px;margin-bottom:10px;">🤷‍♂️</span><h3>Ничего не найдено</h3><p style="color:var(--text-muted);font-size:14px;">Попробуйте изменить фильтр или поисковый запрос.</p></div>`;
+            return;
+        }
+
+        if (viewMode === 'table') {
+            renderTableView(filtered, query);
+            return;
+        }
+
+        container.className = 'grid';
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach(wh => {
+            const isFav = favorites.includes(wh.id);
+            const card = document.createElement('div');
+            card.className = `card status-${wh.statusColor}`;
+            card.setAttribute('data-wh-id', wh.id);
+            card.tabIndex = 0;
+
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'card-title-group';
+
+            if (wh.ids.length > 0) {
+                const idContainer = document.createElement('div');
+                idContainer.className = 'id-badges-container';
+                wh.ids.forEach(idVal => {
+                    const badge = document.createElement('span');
+                    badge.className = 'warehouse-id-badge';
+                    badge.setAttribute('data-copy-id', idVal);
+                    badge.title = 'Нажмите, чтобы скопировать ID';
+                    badge.appendChild(createHighlightedFragment(`ID: ${idVal}`, query));
+                    idContainer.appendChild(badge);
+                });
+                titleGroup.appendChild(idContainer);
+            }
+            
+            const titleH3 = document.createElement('h3');
+            titleH3.appendChild(createHighlightedFragment(wh.title, query));
+            titleGroup.appendChild(titleH3);
+            header.appendChild(titleGroup);
+
+            const favBtn = document.createElement('button');
+            favBtn.className = 'fav-btn' + (isFav ? ' active' : '');
+            favBtn.dataset.id = wh.id;
+            favBtn.type = 'button';
+            favBtn.textContent = isFav ? '★' : '☆';
+            header.appendChild(favBtn);
+            card.appendChild(header);
+
+            const tagsRow = document.createElement('div');
+            tagsRow.className = 'tags-row';
+            if (wh.type) { const t = document.createElement('span'); t.className = 'tag tag-type'; t.textContent = `📦 ${wh.type}`; tagsRow.appendChild(t); }
+            if (wh.ownership) { const t = document.createElement('span'); t.className = 'tag tag-ownership'; t.textContent = `🏢 ${wh.ownership}`; tagsRow.appendChild(t); }
+            if (wh.timeZone) {
+                const t = document.createElement('span');
+                t.className = 'tag tag-info';
+                t.setAttribute('data-tz', wh.timeZone);
+                t.textContent = formatLiveTime(wh.timeZone);
+                tagsRow.appendChild(t);
+            }
+            if (wh.fbo) {
+                const t = document.createElement('span');
+                t.className = 'tag tag-active';
+                t.textContent = wh.fboGates ? `✅ ФБО (Вр: ${wh.fboGates})` : '✅ ФБО';
+                tagsRow.appendChild(t);
+            }
+            if (wh.fbs) {
+                const t = document.createElement('span');
+                t.className = 'tag tag-active';
+                t.textContent = wh.fbsGates ? `✅ ФБС (Вр: ${wh.fbsGates})` : '✅ ФБС';
+                tagsRow.appendChild(t);
+            }
+            if (wh.brak) { const t = document.createElement('span'); t.className = 'tag tag-warning'; t.textContent = '⚠️ Брак'; tagsRow.appendChild(t); }
+            if (tagsRow.hasChildNodes()) card.appendChild(tagsRow);
+
+            const specs = document.createElement('div');
+            specs.className = 'specs-grid';
+
+            const addSpec = (label, valueText, isFullWidth = false) => {
+                if (!valueText) return;
+                const item = document.createElement('div');
+                item.className = 'spec-item' + (isFullWidth ? ' full-width' : '');
+                const lbl = document.createElement('span');
+                lbl.className = 'spec-label';
+                lbl.textContent = label;
+                const val = document.createElement('span');
+                val.className = 'spec-value';
+                val.appendChild(createHighlightedFragment(valueText, query));
+                item.append(lbl, val);
+                specs.appendChild(item);
+            };
+
+            addSpec('Общая площадь ЛО', wh.area);
+            addSpec('Ворота (СГТ)', wh.gates);
+            addSpec('Выделенная зона СГТ', wh.sgtArea);
+            addSpec('Площадь по полу', wh.floorArea);
+            addSpec('Совместная площадь (СЦ/СК)', wh.sharedArea, true);
+
+            if (specs.hasChildNodes()) card.appendChild(specs);
+
+            if (wh.address) {
+                const addressBox = document.createElement('div');
+                addressBox.className = 'address-box';
+                const addrIcon = document.createElement('span');
+                addrIcon.className = 'address-icon';
+                addrIcon.textContent = '📍';
+                const addrText = document.createElement('span');
+                addrText.appendChild(createHighlightedFragment(wh.address, query));
+                addressBox.append(addrIcon, addrText);
+                card.appendChild(addressBox);
+            }
+
+            const footer = document.createElement('div');
+            footer.className = 'card-footer';
+            
+            const statusBadge = document.createElement('div');
+            statusBadge.className = 'status-badge';
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            statusBadge.append(dot, document.createTextNode(wh.statusText));
+            footer.appendChild(statusBadge);
+
+            const btnsWrap = document.createElement('div');
+            btnsWrap.className = 'footer-btns';
+
+            if (wh.coords) {
+                const cBtn = document.createElement('button');
+                cBtn.type = 'button';
+                cBtn.className = 'coords-copy-btn';
+                cBtn.setAttribute('data-coords', wh.coords);
+                cBtn.title = 'Скопировать GPS-координаты';
+                cBtn.textContent = '📌 GPS';
+                btnsWrap.appendChild(cBtn);
+            }
+
+            if (wh.coords || wh.address) {
+                const mapQuery = encodeURIComponent(wh.coords || wh.address || wh.title);
+                const routeBtn = document.createElement('a');
+                routeBtn.className = 'route-btn';
+                routeBtn.href = `https://yandex.ru/maps/?text=${mapQuery}`;
+                routeBtn.target = '_blank';
+                routeBtn.rel = 'noopener noreferrer';
+                routeBtn.textContent = '🗺️ Маршрут';
+                routeBtn.addEventListener('click', (e) => e.stopPropagation());
+                btnsWrap.appendChild(routeBtn);
+            }
+            
+            footer.appendChild(btnsWrap);
+            card.appendChild(footer);
+            fragment.appendChild(card);
+        });
+
+        container.textContent = '';
+        container.appendChild(fragment);
+    }
+
+    function toggleFavoriteById(id) {
+        if (!id) return;
+        const index = favorites.indexOf(id);
+        if (index > -1) {
+            favorites.splice(index, 1);
+            showToast('Удалено из избранного');
+        } else {
+            favorites.push(id);
+            showToast('⭐ Добавлено в избранное');
+        }
+        safeSetJSON(STORAGE_KEYS.favorites, favorites);
+        renderTabs();
+        
+        const searchInput = document.getElementById('searchInput');
+        if (currentTab === '⭐ Избранное') {
+            renderCards(searchInput ? searchInput.value.trim() : '');
+        } else {
+            document.querySelectorAll(`.fav-btn[data-id="${id}"]`).forEach(btn => {
+                const isFav = favorites.includes(id);
+                btn.classList.toggle('active', isFav);
+                btn.textContent = isFav ? '★' : '☆';
+            });
+        }
+    }
+
+    function openModal(wh) {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('infoModal');
+        const listContainer = document.getElementById('modalList');
+        const navActions = document.getElementById('modalNavActions');
+        if (!overlay || !modal || !listContainer) return;
+
+        const q = encodeURIComponent(wh.coords || wh.address || wh.title);
+        navActions.innerHTML = `
+            <a href="https://yandex.ru/maps/?text=${q}" target="_blank" rel="noopener" class="modal-nav-btn">🧭 Яндекс.Карты</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener" class="modal-nav-btn">🌍 Google Maps</a>
+        `;
+
+        const fields = [
+            { label: 'Склад', value: wh.title },
+            { label: 'ID Блоков', value: wh.ids.join(', ') },
+            { label: 'Статус ЛО', value: wh.statusText },
+            { label: 'Маршрутизатор', value: wh.routerStatus },
+            { label: 'Комментарий', value: wh.comment },
+            { label: 'Формат', value: wh.type },
+            { label: 'Собственность', value: wh.ownership },
+            { label: 'Местное время', value: formatLiveTime(wh.timeZone) || wh.timeZone },
+            { label: 'Совместная площадь (СЦ/СК)', value: wh.sharedArea },
+            { label: 'Общая площадь ЛО', value: wh.area },
+            { label: 'Площадь по полу', value: wh.floorArea },
+            { label: 'Выделенная зона СГТ', value: wh.sgtArea },
+            { label: 'Ворота (СГТ)', value: wh.gates },
+            { label: 'ФБО', value: wh.fbo ? (wh.fboGates ? `Да (Ворота: ${wh.fboGates})` : 'Да') : '' },
+            { label: 'ФБС', value: wh.fbs ? (wh.fbsGates ? `Да (Ворота: ${wh.fbsGates})` : 'Да') : '' },
+            { label: 'Отдел Брака', value: wh.brak ? 'Да' : '' },
+            { label: 'Адрес', value: wh.address },
+            { label: 'GPS Координаты', value: wh.coords }
+        ].filter(f => f.value);
+
+        rawTextToCopy = fields.map(f => `${f.label}: ${f.value}`).join('\n');
+
+        listContainer.textContent = '';
+        fields.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'modal-list-item';
+            div.onclick = () => copyToClipboard(item.value, `${item.label} скопировано!`);
+            
+            const title = document.createElement('div');
+            title.className = 'modal-list-title';
+            title.textContent = item.label;
+            
+            const val = document.createElement('div');
+            val.className = 'modal-list-value';
+            val.textContent = item.value;
+            
+            div.append(title, val);
+            listContainer.appendChild(div);
+        });
+        
+        overlay.style.display = 'block';
+        setTimeout(() => {
+            overlay.classList.add('active');
+            modal.classList.add('active');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('infoModal');
+        if (!overlay || !modal) return;
+
+        overlay.classList.remove('active');
+        modal.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 280);
+    }
+
+    function copyToClipboard(text, msg = 'Данные скопированы!') {
+        const fallbackCopy = () => {
+            try {
+                const ta = document.createElement("textarea");
+                ta.value = text;
+                ta.style.position = "fixed"; ta.style.left = "-9999px";
+                document.body.appendChild(ta);
+                ta.focus(); ta.select();
+                document.execCommand('copy');
+                ta.remove();
+                showToast(msg);
+            } catch (err) { showToast('Ошибка копирования'); }
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => showToast(msg)).catch(fallbackCopy);
+        } else {
+            fallbackCopy();
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    async function shareApp() {
+        const currentUrl = window.location.origin + window.location.pathname;
+        const shareData = { title: 'Навигатор по складам WB', text: 'Актуальная база складов КБТ/СГТ', url: currentUrl };
+        try {
+            if (navigator.share) await navigator.share(shareData);
+            else copyToClipboard(currentUrl, 'Ссылка скопирована!');
+        } catch (err) {
+            if (err.name !== 'AbortError') copyToClipboard(currentUrl, 'Ссылка скопирована!');
+        }
+    }
+</script>
+</body>
+</html>
