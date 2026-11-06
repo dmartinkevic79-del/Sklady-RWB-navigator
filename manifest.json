@@ -1,7 +1,8 @@
 {
   "name": "Навигатор Складов",
   "short_name": "Склады WB",
-  "start_url": "./index.html",
+  "start_url": "/Sklady-RWB-navigator/index.html",
+  "scope": "/Sklady-RWB-navigator/",
   "display": "standalone",
   "background_color": "#0b0f19",
   "theme_color": "#0b0f19",
