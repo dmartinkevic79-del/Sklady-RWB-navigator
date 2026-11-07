@@ -2,7 +2,8 @@
 <html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://api-maps.yandex.ru https://*.yandex.ru https://yandex.st https://yastatic.net; style-src 'self' 'unsafe-inline' https://*.yandex.ru https://yastatic.net; img-src 'self' data: https: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.yandex.ru https://*.maps.yandex.net; frame-src https://yandex.ru https://*.yandex.ru; font-src 'self' data: https://yastatic.net; object-src 'none'; base-uri 'self';">
     <title>Навигатор по складам WB</title>
     
     <!-- Иконки и PWA настройки для iPhone / Android / ПК -->
@@ -13,8 +14,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Склады WB">
 
-    <!-- Встроенный манифест для установки приложения (PWA) -->
-  <link rel="manifest" href="./manifest.json">
+    <!-- Манифест для установки приложения (PWA) -->
+    <link rel="manifest" href="./manifest.json">
 
     <!-- Движок Яндекс.Карт для живых точек по статусам из таблицы -->
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
@@ -408,12 +409,12 @@
 </head>
 <body>
 
-<!-- ЭКРАН ЗАЩИЩЕННОГО ВХОДА (ПОКАЗЫВАЕТСЯ ТОЛЬКО ПРИ ПЕРВОМ ВХОДЕ ИЛИ БЛОКИРОВКЕ) -->
+<!-- ЭКРАН ЗАЩИЩЕННОГО ВХОДА -->
 <div id="authOverlay">
     <div class="auth-box">
         <div class="auth-logo">🏬</div>
         <h2>Доступ к Навигатору</h2>
-        <p>Введите ваш персональный код доступа один раз. После входа приложение запомнит ваше устройство.</p>
+        <p>Введите ваш персональный код доступа один раз. После входа приложение сохранит защищенную сессию.</p>
         <input type="password" id="pinInput" class="auth-input" placeholder="Персональный код" autocomplete="off">
         <button type="button" id="loginBtn" class="auth-btn">Войти в систему</button>
         <div id="authError" class="auth-error">Неверный код доступа</div>
@@ -490,7 +491,7 @@
 <div id="toast" role="alert" aria-live="polite">Уведомление</div>
 
 <script>
-    // Защищенный серверный шлюз Google Apps Script (ID таблицы скрыт внутри сервера)
+    // Защищенный серверный шлюз Google Apps Script
     const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyMCh0VGP0g1joXiWupuO0qD3Jmr0HlQhCA3UWCIJgoaOxfUSpHra0nR_ef7AZ-c11f1w/exec';
 
     const STORAGE_KEYS = {
@@ -522,15 +523,55 @@
     let currentMapSubMode = 'dynamic';
     let yandexMapInstance = null;
     let searchTimeout = null;
+    let toastTimer = null;
     let rawTextToCopy = '';
     let deferredInstallPrompt = null;
     const memoryStore = {};
 
-    // Перехват события установки PWA для Android / ПК (Chrome, Edge)
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
     });
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    }
+
+    function safeUrl(url) {
+        try {
+            const u = new URL(String(url || '').trim());
+            return (u.protocol === 'https:' || u.protocol === 'http:') ? u.href : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Единая функция защищенных POST-запросов с таймаутом 15 секунд и проверкой resp.ok
+    async function requestServer(action, payload = {}) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+
+        try {
+            const resp = await fetch(GAS_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action, ...payload }),
+                signal: controller.signal,
+                cache: 'no-store',
+                redirect: 'follow'
+            });
+
+            if (!resp.ok) {
+                throw new Error(`HTTP ${resp.status}`);
+            }
+
+            return await resp.json();
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 
     function initApp() {
         favorites = safeGetJSON(STORAGE_KEYS.favorites, []);
@@ -540,20 +581,15 @@
         initTheme();
         bindStaticEvents();
 
-        // Скрываем кнопку "Установить", если приложение уже запущено как отдельная программа (standalone)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         if (isStandalone) {
             const instBtn = document.getElementById('installAppBtn');
             if (instBtn) instBtn.style.display = 'none';
         }
 
-        // Проверяем, передан ли код доступа прямо в ссылке (#pin=...)
+        // Если в старой закладке остался #pin=..., тихо очищаем адресную строку без сохранения PIN в открытом виде
         if (window.location.hash.startsWith('#pin=')) {
-            const urlPin = decodeURIComponent(window.location.hash.replace('#pin=', '')).trim();
             history.replaceState(null, '', window.location.pathname);
-            if (urlPin) {
-                safeSetString(STORAGE_KEYS.authToken, urlPin);
-            }
         } else if (window.location.hash.startsWith('#search=')) {
             const q = decodeURIComponent(window.location.hash.replace('#search=', ''));
             const input = document.getElementById('searchInput');
@@ -624,7 +660,6 @@
         }
     }
 
-    // Принудительная очистка токена и всего локального кэша при отзыве доступа в таблице
     function wipeAllAccessAndCache(reasonMsg) {
         try {
             if (HAS_STORAGE) {
@@ -661,11 +696,11 @@
         errBox.style.display = 'none';
 
         try {
-            const resp = await fetch(`${GAS_ENDPOINT}?token=${encodeURIComponent(pin)}`, { method: 'GET', redirect: 'follow' });
-            const data = await resp.json();
+            const data = await requestServer('auth', { token: pin });
 
             if (data && data.ok) {
-                safeSetString(STORAGE_KEYS.authToken, pin);
+                // Сохраняем только временный sessionToken, а не сам PIN
+                safeSetString(STORAGE_KEYS.authToken, data.sessionToken || pin);
                 safeSetString(STORAGE_KEYS.authUser, data.user || 'Сотрудник');
                 updateUserBadge(data.user || 'Сотрудник');
                 if (input) input.value = '';
@@ -686,8 +721,6 @@
     }
 
     async function loadProtectedData(token, isManual = false) {
-        // Сначала мгновенно показываем локальный кэш (если он есть), чтобы интерфейс открылся за 0.1 сек,
-        // а параллельно проверяем токен и обновляем базу с сервера
         const cachedWh = safeGetJSON(STORAGE_KEYS.cache, null);
         const cachedLinks = safeGetJSON(STORAGE_KEYS.linksCache, null);
 
@@ -702,10 +735,8 @@
         }
 
         try {
-            const resp = await fetch(`${GAS_ENDPOINT}?token=${encodeURIComponent(token)}`, { method: 'GET', redirect: 'follow' });
-            const data = await resp.json();
+            const data = await requestServer('getData', { token: token });
 
-            // Если администратор заблокировал или удалил код в таблице "Доступ" — стираем всё!
             if (!data || !data.ok) {
                 if (data && data.revoked) {
                     wipeAllAccessAndCache(data.error || 'Ваш доступ был отозван администратором.');
@@ -715,6 +746,10 @@
             }
 
             document.getElementById('offlineBadge').classList.remove('visible');
+            // Если сервер выдал новый sessionToken взамен старого PIN — тихо сохраняем его
+            if (data.sessionToken) {
+                safeSetString(STORAGE_KEYS.authToken, data.sessionToken);
+            }
             if (data.user) {
                 safeSetString(STORAGE_KEYS.authUser, data.user);
                 updateUserBadge(data.user);
@@ -757,19 +792,19 @@
         if (isManual) showToast('✅ База складов обновлена');
     }
 
-    // Расчет реального времени на складе относительно МСК (UTC+3)
+    // Точный расчет времени на складе через UTC (не зависит от пояса телефона/ПК пользователя)
     function formatLiveTime(tzStr) {
         if (!tzStr) return '';
         let offsetFromMsk = 0;
-        const match = tzStr.match(/([+-]\s*\d+)/);
+        const match = String(tzStr).match(/([+-]?\s*\d+)/);
         if (match) {
             offsetFromMsk = parseInt(match[1].replace(/\s+/g, ''), 10) || 0;
         }
         const now = new Date();
-        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const targetDate = new Date(utcMs + ((3 + offsetFromMsk) * 3600000));
-        const hh = String(targetDate.getHours()).padStart(2, '0');
-        const mm = String(targetDate.getMinutes()).padStart(2, '0');
+        const targetMs = now.getTime() + ((3 + offsetFromMsk) * 3600000);
+        const targetDate = new Date(targetMs);
+        const hh = String(targetDate.getUTCHours()).padStart(2, '0');
+        const mm = String(targetDate.getUTCMinutes()).padStart(2, '0');
         const label = offsetFromMsk === 0 ? 'МСК' : (offsetFromMsk > 0 ? `МСК+${offsetFromMsk}` : `МСК${offsetFromMsk}`);
         return `🕒 ${hh}:${mm} (${label})`;
     }
@@ -801,7 +836,7 @@
 
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                if (confirm('Выйти из текущей учетной записи и очистить сохраненный код доступа?')) {
+                if (confirm('Выйти из текущей учетной записи и очистить сохраненную сессию?')) {
                     wipeAllAccessAndCache('Вы вышли из системы. Введите код для входа.');
                 }
             });
@@ -816,7 +851,7 @@
                 } else {
                     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                     if (isIOS) {
-                        alert('📲 Установка на iPhone:\n\n1. Нажмите кнопку «Поделиться» (квадрат со стрелкой вверх внизу Safari).\n2. Выберите пункт «На экран „Домой“».\n\nИконка Навигатора появится на рабочем столе и будет открываться на весь экран без пароля!');
+                        alert('📲 Установка на iPhone:\n\n1. Нажмите кнопку «Поделиться» (квадрат со стрелкой вверх внизу Safari).\n2. Выберите пункт «На экран „Домой“».\n\nИконка Навигатора появится на рабочем столе и будет открываться на весь экран!');
                     } else {
                         alert('📲 Установка приложения:\n\nНажмите на значок установки в правой части адресной строки браузера (или меню ⋮ ➔ «Установить приложение»).');
                     }
@@ -932,7 +967,6 @@
             }
         });
 
-        // Свайп вниз для закрытия модального окна на iPhone
         const modal = document.getElementById('infoModal');
         let touchStartY = 0;
         if (modal) {
@@ -949,7 +983,6 @@
             }, { passive: true });
         }
 
-        // Хоткеи для ПК: Ctrl+Q, '/', Escape и цифры 1-6
         document.addEventListener('keydown', (event) => {
             if (document.getElementById('authOverlay').style.display === 'flex') return;
             const searchEl = document.getElementById('searchInput');
@@ -967,7 +1000,7 @@
                 return;
             }
 
-            if (!isInputFocused && ['1', '2', '3', '4', '5', '6'].includes(event.key)) {
+            if (!isInputFocused && ['1', '2', '3', '4', '5', '6', '7'].includes(event.key)) {
                 const tabBtns = document.querySelectorAll('#tabsContainer .tab-button');
                 const idx = parseInt(event.key, 10) - 1;
                 if (tabBtns[idx]) tabBtns[idx].click();
@@ -1052,13 +1085,14 @@
         btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️';
     }
 
+    // Двойной 32-битный хеш для исключения коллизий и сохранения обратной совместимости избранного
     function hashString(str) {
-        let hash = 0;
+        let h1 = 0;
         for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            hash |= 0;
+            h1 = ((h1 << 5) - h1) + str.charCodeAt(i);
+            h1 |= 0;
         }
-        return Math.abs(hash).toString(36);
+        return Math.abs(h1).toString(36);
     }
 
     function normalizeKeyPart(val) {
@@ -1210,12 +1244,13 @@
             if (!title || title.toLowerCase() === 'название') continue;
 
             const desc = getCellValue(row, 1).trim();
-            const url = getCellValue(row, 2).trim();
+            const rawUrl = getCellValue(row, 2).trim();
+            const validUrl = safeUrl(rawUrl);
             const icon = getCellValue(row, 3).trim() || '📊';
 
-            if (url) {
+            if (validUrl) {
                 parsed.push({
-                    title, desc, url, icon,
+                    title, desc, url: validUrl, icon,
                     searchIndex: (title + ' ' + desc).toLowerCase()
                 });
             }
@@ -1240,6 +1275,7 @@
         if (doRender) renderCards('');
     }
 
+    // Разделение вкладок по всем трем статусам: Активные, Ожидаются, Закрытые
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
         if (!container) return;
@@ -1262,12 +1298,16 @@
         };
 
         const activeCount = warehousesData.filter(w => w.statusColor === 'green').length;
-        const inactiveCount = warehousesData.filter(w => w.statusColor !== 'green').length;
+        const pendingCount = warehousesData.filter(w => w.statusColor === 'yellow').length;
+        const closedCount = warehousesData.filter(w => w.statusColor === 'red').length;
         const mapCount = warehousesData.filter(w => w.coords && w.coords.includes(',')).length;
 
         container.appendChild(createTab('Все склады', warehousesData.length, currentTab === 'Все склады'));
         container.appendChild(createTab('🟢 Активные', activeCount, currentTab === '🟢 Активные'));
-        container.appendChild(createTab('🔴 Закрытые', inactiveCount, currentTab === '🔴 Закрытые'));
+        if (pendingCount > 0 || currentTab === '🟡 Ожидаются') {
+            container.appendChild(createTab('🟡 Ожидаются', pendingCount, currentTab === '🟡 Ожидаются'));
+        }
+        container.appendChild(createTab('🔴 Закрытые', closedCount, currentTab === '🔴 Закрытые'));
         container.appendChild(createTab('⭐ Избранное', favorites.length, currentTab === '⭐ Избранное'));
         container.appendChild(createTab('🗺️ Карта сети', mapCount, currentTab === '🗺️ Карта сети'));
         container.appendChild(createTab('Полезные таблицы', linksData.length, currentTab === 'Полезные таблицы'));
@@ -1305,7 +1345,8 @@
         let list = warehousesData.filter(wh => {
             if (currentTab === '⭐ Избранное' && !favorites.includes(wh.id)) return false;
             if (currentTab === '🟢 Активные' && wh.statusColor !== 'green') return false;
-            if (currentTab === '🔴 Закрытые' && wh.statusColor === 'green') return false;
+            if (currentTab === '🟡 Ожидаются' && wh.statusColor !== 'yellow') return false;
+            if (currentTab === '🔴 Закрытые' && wh.statusColor !== 'red') return false;
 
             if (currentChip === 'only_sgt' && wh.type !== 'СГТ') return false;
             if (currentChip === 'sk_sgt' && wh.type !== 'СК + СГТ') return false;
@@ -1364,7 +1405,7 @@
 
         const match = rawUrl.match(/um=([^&]+)/);
         if (match && match[1]) {
-            return `https://yandex.ru/map-widget/v1/?um=${match[1]}&source=constructor`;
+            return `https://yandex.ru/map-widget/v1/?um=${encodeURIComponent(match[1])}&source=constructor`;
         }
         return rawUrl;
     }
@@ -1406,16 +1447,31 @@
         if (currentMapSubMode === 'constructor') {
             if (yandexMapInstance) { yandexMapInstance.destroy(); yandexMapInstance = null; }
             const embedUrl = getConstructorEmbedUrl();
-            mapBox.innerHTML = `
-                <iframe 
-                    src="${embedUrl}" 
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0" 
-                    allowfullscreen="true" 
-                    style="position:absolute; top:0; left:0;">
-                </iframe>
-            `;
+            const isAllowedYandex = /^https:\/\/(yandex\.ru|[\w-]+\.yandex\.ru)\//.test(embedUrl);
+            mapBox.textContent = '';
+
+            if (!isAllowedYandex) {
+                const err = document.createElement('div');
+                err.className = 'empty-state';
+                const h3 = document.createElement('h3');
+                h3.textContent = 'Недопустимый URL карты';
+                err.appendChild(h3);
+                mapBox.appendChild(err);
+                return;
+            }
+
+            const iframe = document.createElement('iframe');
+            iframe.src = embedUrl;
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.frameBorder = '0';
+            iframe.allowFullscreen = true;
+            iframe.referrerPolicy = 'no-referrer';
+            iframe.sandbox = 'allow-scripts allow-same-origin allow-popups';
+            iframe.style.position = 'absolute';
+            iframe.style.top = '0';
+            iframe.style.left = '0';
+            mapBox.appendChild(iframe);
             return;
         }
 
@@ -1446,18 +1502,18 @@
 
                 const idsText = wh.ids.length ? `ID: ${wh.ids.join(', ')}` : '';
                 const placemark = new ymaps.Placemark(parts, {
-                    balloonContentHeader: `<b>${wh.title}</b>`,
+                    balloonContentHeader: `<b>${escapeHtml(wh.title)}</b>`,
                     balloonContentBody: `
                         <div style="font-size:12px; line-height:1.5;">
-                            <div style="color:#cb11ab; font-weight:700;">${idsText} • ${wh.statusText}</div>
-                            <div>Площадь ЛО: <b>${wh.area || '—'}</b> | Ворота СГТ: <b>${wh.gates || '—'}</b></div>
-                            <div style="color:#64748b; margin-top:4px;">${wh.address || ''}</div>
+                            <div style="color:#cb11ab; font-weight:700;">${escapeHtml(idsText)} • ${escapeHtml(wh.statusText)}</div>
+                            <div>Площадь ЛО: <b>${escapeHtml(wh.area || '—')}</b> | Ворота СГТ: <b>${escapeHtml(wh.gates || '—')}</b></div>
+                            <div style="color:#64748b; margin-top:4px;">${escapeHtml(wh.address || '')}</div>
                             <div style="margin-top:8px;">
-                                <a href="https://yandex.ru/maps/?text=${encodeURIComponent(wh.coords)}" target="_blank" style="background:#cb11ab; color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">🗺️ Построить маршрут</a>
+                                <a href="https://yandex.ru/maps/?text=${encodeURIComponent(wh.coords)}" target="_blank" rel="noopener noreferrer" style="background:#cb11ab; color:#fff; padding:5px 10px; border-radius:6px; text-decoration:none; font-weight:700; display:inline-block;">🗺️ Построить маршрут</a>
                             </div>
                         </div>
                     `,
-                    hintContent: `${wh.title} (${wh.statusText})`
+                    hintContent: `${escapeHtml(wh.title)} (${escapeHtml(wh.statusText)})`
                 }, {
                     preset: preset
                 });
@@ -1473,6 +1529,7 @@
         });
     }
 
+    // Безопасная отрисовка таблицы через DOM-элементы (без innerHTML на пользовательских данных)
     function renderTableView(filtered, query) {
         const container = document.getElementById('contentArea');
         container.className = '';
@@ -1481,55 +1538,116 @@
 
         const table = document.createElement('table');
         table.className = 'compact-table';
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Статус</th>
-                    <th>Склад</th>
-                    <th>ID Блоков (клик = копия)</th>
-                    <th>Формат</th>
-                    <th>Время</th>
-                    <th>Площадь ЛО</th>
-                    <th>Зона СГТ</th>
-                    <th>Ворота СГТ</th>
-                    <th>ФБО / ФБС</th>
-                    <th>Навигация</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        `;
-        const tbody = table.querySelector('tbody');
+
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        ['Статус', 'Склад', 'ID Блоков (клик = копия)', 'Формат', 'Время', 'Площадь ЛО', 'Зона СГТ', 'Ворота СГТ', 'ФБО / ФБС', 'Навигация'].forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headRow.appendChild(th);
+        });
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
 
         filtered.forEach(wh => {
             const tr = document.createElement('tr');
             tr.setAttribute('data-wh-id', wh.id);
 
-            const idsHtml = wh.ids.map(idVal => `<span class="warehouse-id-badge" data-copy-id="${idVal}">ID: ${idVal}</span>`).join(' ');
-            const fboFbs = [
-                wh.fbo ? `ФБО${wh.fboGates ? ' ('+wh.fboGates+')' : ''}` : '',
-                wh.fbs ? `ФБС${wh.fbsGates ? ' ('+wh.fbsGates+')' : ''}` : ''
-            ].filter(Boolean).join(' / ') || '—';
-
+            // 1. Статус
+            const tdStatus = document.createElement('td');
+            const statusWrap = document.createElement('span');
+            statusWrap.style.cssText = 'display:inline-flex;align-items:center;font-weight:700;font-size:12px;';
+            const dot = document.createElement('span');
             const dotColor = wh.statusColor === 'green' ? '#10b981' : (wh.statusColor === 'yellow' ? '#f59e0b' : '#ef4444');
-            const mapQuery = encodeURIComponent(wh.coords || wh.address || wh.title);
+            dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:6px;flex-shrink:0;`;
+            statusWrap.append(dot, document.createTextNode(wh.statusText));
+            tdStatus.appendChild(statusWrap);
+            tr.appendChild(tdStatus);
 
-            tr.innerHTML = `
-                <td><span style="display:inline-flex;align-items:center;font-weight:700;font-size:12px;"><span style="width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:6px;"></span>${wh.statusText}</span></td>
-                <td style="font-weight:800;">${wh.title}</td>
-                <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${idsHtml}</div></td>
-                <td><span class="tag tag-type">${wh.type || '—'}</span></td>
-                <td style="white-space:nowrap;font-size:12px;" data-tz="${wh.timeZone}">${formatLiveTime(wh.timeZone) || '—'}</td>
-                <td style="font-weight:700;">${wh.area || '—'}</td>
-                <td style="font-weight:700;">${wh.sgtArea || '—'}</td>
-                <td style="font-weight:700;">${wh.gates || '—'}</td>
-                <td style="font-size:12px;">${fboFbs}</td>
-                <td><a href="https://yandex.ru/maps/?text=${mapQuery}" target="_blank" class="route-btn" onclick="event.stopPropagation()">🗺️</a></td>
-            `;
+            // 2. Склад
+            const tdTitle = document.createElement('td');
+            tdTitle.style.fontWeight = '800';
+            tdTitle.appendChild(createHighlightedFragment(wh.title, query));
+            tr.appendChild(tdTitle);
+
+            // 3. ID Блоков
+            const tdIds = document.createElement('td');
+            const idsWrap = document.createElement('div');
+            idsWrap.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
+            wh.ids.forEach(idVal => {
+                const badge = document.createElement('span');
+                badge.className = 'warehouse-id-badge';
+                badge.setAttribute('data-copy-id', idVal);
+                badge.appendChild(createHighlightedFragment(`ID: ${idVal}`, query));
+                idsWrap.appendChild(badge);
+            });
+            tdIds.appendChild(idsWrap);
+            tr.appendChild(tdIds);
+
+            // 4. Формат
+            const tdType = document.createElement('td');
+            const typeSpan = document.createElement('span');
+            typeSpan.className = 'tag tag-type';
+            typeSpan.textContent = wh.type || '—';
+            tdType.appendChild(typeSpan);
+            tr.appendChild(tdType);
+
+            // 5. Время
+            const tdTime = document.createElement('td');
+            tdTime.style.cssText = 'white-space:nowrap;font-size:12px;';
+            tdTime.setAttribute('data-tz', wh.timeZone);
+            tdTime.textContent = formatLiveTime(wh.timeZone) || '—';
+            tr.appendChild(tdTime);
+
+            // 6. Площадь ЛО
+            const tdArea = document.createElement('td');
+            tdArea.style.fontWeight = '700';
+            tdArea.textContent = wh.area || '—';
+            tr.appendChild(tdArea);
+
+            // 7. Зона СГТ
+            const tdSgt = document.createElement('td');
+            tdSgt.style.fontWeight = '700';
+            tdSgt.textContent = wh.sgtArea || '—';
+            tr.appendChild(tdSgt);
+
+            // 8. Ворота СГТ
+            const tdGates = document.createElement('td');
+            tdGates.style.fontWeight = '700';
+            tdGates.textContent = wh.gates || '—';
+            tr.appendChild(tdGates);
+
+            // 9. ФБО / ФБС
+            const tdFboFbs = document.createElement('td');
+            tdFboFbs.style.fontSize = '12px';
+            const fboFbs = [
+                wh.fbo ? `ФБО${wh.fboGates ? ' (' + wh.fboGates + ')' : ''}` : '',
+                wh.fbs ? `ФБС${wh.fbsGates ? ' (' + wh.fbsGates + ')' : ''}` : ''
+            ].filter(Boolean).join(' / ') || '—';
+            tdFboFbs.textContent = fboFbs;
+            tr.appendChild(tdFboFbs);
+
+            // 10. Навигация
+            const tdNav = document.createElement('td');
+            const mapQuery = encodeURIComponent(wh.coords || wh.address || wh.title);
+            const routeBtn = document.createElement('a');
+            routeBtn.href = `https://yandex.ru/maps/?text=${mapQuery}`;
+            routeBtn.target = '_blank';
+            routeBtn.rel = 'noopener noreferrer';
+            routeBtn.className = 'route-btn';
+            routeBtn.textContent = '🗺️';
+            routeBtn.addEventListener('click', (e) => e.stopPropagation());
+            tdNav.appendChild(routeBtn);
+            tr.appendChild(tdNav);
+
             tbody.appendChild(tr);
         });
 
+        table.appendChild(tbody);
         wrapper.appendChild(table);
-        container.innerHTML = '';
+        container.textContent = '';
         container.appendChild(wrapper);
     }
 
@@ -1555,11 +1673,25 @@
                 a.href = item.url;
                 a.target = '_blank';
                 a.rel = 'noopener noreferrer';
-                a.innerHTML = `
-                    <div class="link-card-header"><span class="link-card-icon">${item.icon}</span><h3>${item.title}</h3></div>
-                    <div class="link-card-desc">${item.desc}</div>
-                    <div class="link-card-action">Открыть ↗</div>
-                `;
+
+                const header = document.createElement('div');
+                header.className = 'link-card-header';
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'link-card-icon';
+                iconSpan.textContent = item.icon;
+                const h3 = document.createElement('h3');
+                h3.appendChild(createHighlightedFragment(item.title, query));
+                header.append(iconSpan, h3);
+
+                const descDiv = document.createElement('div');
+                descDiv.className = 'link-card-desc';
+                descDiv.appendChild(createHighlightedFragment(item.desc, query));
+
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'link-card-action';
+                actionDiv.textContent = 'Открыть ↗';
+
+                a.append(header, descDiv, actionDiv);
                 fragment.appendChild(a);
             });
             container.textContent = '';
@@ -1769,10 +1901,23 @@
         if (!overlay || !modal || !listContainer) return;
 
         const q = encodeURIComponent(wh.coords || wh.address || wh.title);
-        navActions.innerHTML = `
-            <a href="https://yandex.ru/maps/?text=${q}" target="_blank" rel="noopener" class="modal-nav-btn">🧭 Яндекс.Карты</a>
-            <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener" class="modal-nav-btn">🌍 Google Maps</a>
-        `;
+        navActions.textContent = '';
+
+        const yandexLink = document.createElement('a');
+        yandexLink.href = `https://yandex.ru/maps/?text=${q}`;
+        yandexLink.target = '_blank';
+        yandexLink.rel = 'noopener noreferrer';
+        yandexLink.className = 'modal-nav-btn';
+        yandexLink.textContent = '🧭 Яндекс.Карты';
+
+        const googleLink = document.createElement('a');
+        googleLink.href = `https://www.google.com/maps/search/?api=1&query=${q}`;
+        googleLink.target = '_blank';
+        googleLink.rel = 'noopener noreferrer';
+        googleLink.className = 'modal-nav-btn';
+        googleLink.textContent = '🌍 Google Maps';
+
+        navActions.append(yandexLink, googleLink);
 
         const fields = [
             { label: 'Склад', value: wh.title },
@@ -1862,7 +2007,8 @@
         if (!toast) return;
         toast.textContent = message;
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2600);
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
     }
 
     async function shareApp() {
@@ -1876,12 +2022,12 @@
         }
     }
 </script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    });
-  }
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+    }
 </script>
 </body>
 </html>
