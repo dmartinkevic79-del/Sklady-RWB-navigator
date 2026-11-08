@@ -6,7 +6,6 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://api-maps.yandex.ru https://*.yandex.ru https://yandex.st https://yastatic.net; style-src 'self' 'unsafe-inline' https://*.yandex.ru https://yastatic.net; img-src 'self' data: https: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.yandex.ru https://*.maps.yandex.net; frame-src https://yandex.ru https://*.yandex.ru; font-src 'self' data: https://yastatic.net; object-src 'none'; base-uri 'self';">
     <title>Навигатор по складам WB</title>
     
-    <!-- Иконки и PWA настройки для iPhone / Android / ПК -->
     <link rel="icon" type="image/png" href="./icon.png">
     <link rel="apple-touch-icon" href="./icon.png">
     <meta name="theme-color" content="#0b0f19">
@@ -14,10 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Склады WB">
 
-    <!-- Манифест для установки приложения (PWA) -->
     <link rel="manifest" href="./manifest.json">
-
-    <!-- Движок Яндекс.Карт для живых точек по статусам из таблицы -->
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
 
     <style>
@@ -113,7 +109,6 @@
         ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--wb-accent); }
 
-        /* ЭКРАН АВТОРИЗАЦИИ */
         #authOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-color); display: none; justify-content: center; align-items: center;
@@ -164,7 +159,6 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* ШАПКА С УЧЕТОМ SAFE-AREA НА IPHONE */
         .sticky-header {
             position: sticky; top: 0; z-index: 100;
             background: var(--glass-header); 
@@ -200,7 +194,6 @@
         .install-btn { background: var(--id-badge-bg); border-color: var(--id-badge-border); color: var(--id-badge-text); }
         @media (max-width: 540px) { .btn-text-hide { display: none; } .share-btn, .install-btn { width: 38px; padding: 0; } }
 
-        /* ПОИСК И ХОТКЕЙ-БЕЙДЖ */
         .search-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
         .search-container { position: relative; flex-grow: 1; display: flex; align-items: center; min-width: 240px; }
         .search-container svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px; pointer-events: none; }
@@ -221,7 +214,6 @@
         }
         .sort-select:focus { border-color: var(--wb-accent); }
 
-        /* БЫСТРЫЕ ЧИПСЫ-ФИЛЬТРЫ */
         .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .filter-chips::-webkit-scrollbar { display: none; }
         .chip {
@@ -233,7 +225,6 @@
 
         mark.highlight { background: var(--highlight-bg); color: inherit; border-radius: 3px; padding: 0 2px; }
 
-        /* ВКЛАДКИ */
         .nav-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border-color); scrollbar-width: none; }
         .nav-tabs::-webkit-scrollbar { display: none; }
         
@@ -254,7 +245,6 @@
         }
         .offline-badge.visible { display: inline-block; }
 
-        /* KPI ДАШБОРД НАД СЕТКОЙ */
         .kpi-bar {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
             margin-top: 16px;
@@ -266,7 +256,6 @@
         .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
         .kpi-val { font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 2px; }
 
-        /* СЕТКА КАРТОЧЕК */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; padding-top: 16px; width: 100%; }
 
         .card { 
@@ -340,7 +329,6 @@
         .route-btn { display: inline-flex; align-items: center; gap: 5px; background: var(--wb-gradient); color: white; border: none; padding: 6px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; transition: opacity 0.2s; flex-shrink: 0; }
         .route-btn:hover { opacity: 0.9; }
 
-        /* КОМПАКТНЫЙ ТАБЛИЧНЫЙ ВИД ДЛЯ ПК / ПЛАНШЕТОВ */
         .table-wrapper { width: 100%; overflow-x: auto; margin-top: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--card-bg); }
         table.compact-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         table.compact-table th { background: var(--inner-box-bg); color: var(--text-muted); font-weight: 700; padding: 12px 14px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 11px; text-transform: uppercase; }
@@ -348,18 +336,21 @@
         table.compact-table tr:last-child td { border-bottom: none; }
         table.compact-table tr:hover { background: var(--inner-box-bg); cursor: pointer; }
 
-        /* ПОЛЕЗНЫЕ ТАБЛИЦЫ */
+        /* ПОЛЕЗНЫЕ ТАБЛИЦЫ (С ПОДДЕРЖКОЙ ОГРАНИЧЕНИЯ ДОСТУПА) */
         .link-card {
             background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px;
             padding: 20px; display: flex; flex-direction: column; text-decoration: none; color: inherit;
-            transition: all 0.2s ease;
+            transition: all 0.2s ease; cursor: pointer;
         }
         .link-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--wb-accent); }
+        .link-card.locked-card { opacity: 0.72; border-style: dashed; }
+        .link-card.locked-card:hover { border-color: #ef4444; transform: none; }
         .link-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
         .link-card-icon { font-size: 26px; }
         .link-card h3 { margin: 0; font-size: 17px; font-weight: 800; color: var(--text-main); }
         .link-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; flex-grow: 1; }
         .link-card-action { font-size: 13px; font-weight: 700; color: var(--wb-accent); margin-top: auto; }
+        .link-card.locked-card .link-card-action { color: var(--text-muted); }
 
         .empty-state { grid-column: 1 / -1; text-align: center; padding: 50px 20px; display: flex; flex-direction: column; align-items: center; }
         .footer-copyright { text-align: center; margin-top: auto; padding-top: 32px; padding-bottom: 16px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); opacity: 0.5; }
@@ -367,7 +358,6 @@
         #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-color); padding: 11px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 6000; white-space: nowrap; }
         #toast.show { bottom: calc(28px + env(safe-area-inset-bottom)); }
 
-        /* МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ СВАЙПА НА IPHONE */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.25s ease; }
         .modal-overlay.active { opacity: 1; }
 
@@ -409,7 +399,6 @@
 </head>
 <body>
 
-<!-- ЭКРАН ЗАЩИЩЕННОГО ВХОДА -->
 <div id="authOverlay">
     <div class="auth-box">
         <div class="auth-logo">🏬</div>
@@ -421,7 +410,6 @@
     </div>
 </div>
 
-<!-- ОСНОВНОЙ ИНТЕРФЕЙС НАВИГАТОРА -->
 <div class="container" id="appContainer">
     <div class="sticky-header">
         <div class="header-area">
@@ -491,7 +479,6 @@
 <div id="toast" role="alert" aria-live="polite">Уведомление</div>
 
 <script>
-    // Защищенный серверный шлюз Google Apps Script
     const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyMCh0VGP0g1joXiWupuO0qD3Jmr0HlQhCA3UWCIJgoaOxfUSpHra0nR_ef7AZ-c11f1w/exec';
 
     const STORAGE_KEYS = {
@@ -548,7 +535,6 @@
         }
     }
 
-    // Единая функция защищенных POST-запросов с таймаутом 15 секунд и проверкой resp.ok
     async function requestServer(action, payload = {}) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 15000);
@@ -587,7 +573,6 @@
             if (instBtn) instBtn.style.display = 'none';
         }
 
-        // Если в старой закладке остался #pin=..., тихо очищаем адресную строку без сохранения PIN в открытом виде
         if (window.location.hash.startsWith('#pin=')) {
             history.replaceState(null, '', window.location.pathname);
         } else if (window.location.hash.startsWith('#search=')) {
@@ -610,7 +595,6 @@
             showLoginScreen();
         }
 
-        // Обновление живых часов каждую минуту
         setInterval(() => {
             if (currentTab !== '🗺️ Карта сети' && currentTab !== 'Полезные таблицы') {
                 document.querySelectorAll('[data-tz]').forEach(el => {
@@ -699,7 +683,6 @@
             const data = await requestServer('auth', { token: pin });
 
             if (data && data.ok) {
-                // Сохраняем только временный sessionToken, а не сам PIN
                 safeSetString(STORAGE_KEYS.authToken, data.sessionToken || pin);
                 safeSetString(STORAGE_KEYS.authUser, data.user || 'Сотрудник');
                 updateUserBadge(data.user || 'Сотрудник');
@@ -746,7 +729,6 @@
             }
 
             document.getElementById('offlineBadge').classList.remove('visible');
-            // Если сервер выдал новый sessionToken взамен старого PIN — тихо сохраняем его
             if (data.sessionToken) {
                 safeSetString(STORAGE_KEYS.authToken, data.sessionToken);
             }
@@ -792,7 +774,6 @@
         if (isManual) showToast('✅ База складов обновлена');
     }
 
-    // Точный расчет времени на складе через UTC (не зависит от пояса телефона/ПК пользователя)
     function formatLiveTime(tzStr) {
         if (!tzStr) return '';
         let offsetFromMsk = 0;
@@ -1085,7 +1066,6 @@
         btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '🌙' : '☀️';
     }
 
-    // Двойной 32-битный хеш для исключения коллизий и сохранения обратной совместимости избранного
     function hashString(str) {
         let h1 = 0;
         for (let i = 0; i < str.length; i++) {
@@ -1231,6 +1211,7 @@
         return parsed;
     }
 
+    // Парсинг таблиц с учетом серверной блокировки доступа (LOCKED / ALLOWED)
     function parseLinksTable(tableData) {
         const rows = tableData.rows || [];
         if (rows.length === 0) return [];
@@ -1247,10 +1228,16 @@
             const rawUrl = getCellValue(row, 2).trim();
             const validUrl = safeUrl(rawUrl);
             const icon = getCellValue(row, 3).trim() || '📊';
+            const accessFlag = getCellValue(row, 4).trim();
+            const isLocked = (accessFlag === 'LOCKED') || (!validUrl && accessFlag !== 'ALLOWED');
 
-            if (validUrl) {
+            if (validUrl || isLocked) {
                 parsed.push({
-                    title, desc, url: validUrl, icon,
+                    title,
+                    desc,
+                    url: isLocked ? '' : validUrl,
+                    icon,
+                    locked: isLocked,
                     searchIndex: (title + ' ' + desc).toLowerCase()
                 });
             }
@@ -1275,7 +1262,6 @@
         if (doRender) renderCards('');
     }
 
-    // Разделение вкладок по всем трем статусам: Активные, Ожидаются, Закрытые
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
         if (!container) return;
@@ -1393,9 +1379,11 @@
     function getConstructorEmbedUrl() {
         const defaultUm = 'constructor%3Abaac090cd030b1c4fa84e4805051aec0e78ac981d19f7a237f599af6563c0754';
         const mapRow = linksData.find(l => 
-            l.title.toLowerCase().includes('карта') || 
-            l.url.includes('um=constructor') || 
-            l.url.includes('map-widget')
+            l.url && (
+                l.title.toLowerCase().includes('карта') || 
+                l.url.includes('um=constructor') || 
+                l.url.includes('map-widget')
+            )
         );
         if (!mapRow || !mapRow.url) {
             return `https://yandex.ru/map-widget/v1/?um=${defaultUm}&source=constructor`;
@@ -1529,7 +1517,6 @@
         });
     }
 
-    // Безопасная отрисовка таблицы через DOM-элементы (без innerHTML на пользовательских данных)
     function renderTableView(filtered, query) {
         const container = document.getElementById('contentArea');
         container.className = '';
@@ -1555,7 +1542,6 @@
             const tr = document.createElement('tr');
             tr.setAttribute('data-wh-id', wh.id);
 
-            // 1. Статус
             const tdStatus = document.createElement('td');
             const statusWrap = document.createElement('span');
             statusWrap.style.cssText = 'display:inline-flex;align-items:center;font-weight:700;font-size:12px;';
@@ -1566,13 +1552,11 @@
             tdStatus.appendChild(statusWrap);
             tr.appendChild(tdStatus);
 
-            // 2. Склад
             const tdTitle = document.createElement('td');
             tdTitle.style.fontWeight = '800';
             tdTitle.appendChild(createHighlightedFragment(wh.title, query));
             tr.appendChild(tdTitle);
 
-            // 3. ID Блоков
             const tdIds = document.createElement('td');
             const idsWrap = document.createElement('div');
             idsWrap.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;';
@@ -1586,7 +1570,6 @@
             tdIds.appendChild(idsWrap);
             tr.appendChild(tdIds);
 
-            // 4. Формат
             const tdType = document.createElement('td');
             const typeSpan = document.createElement('span');
             typeSpan.className = 'tag tag-type';
@@ -1594,32 +1577,27 @@
             tdType.appendChild(typeSpan);
             tr.appendChild(tdType);
 
-            // 5. Время
             const tdTime = document.createElement('td');
             tdTime.style.cssText = 'white-space:nowrap;font-size:12px;';
             tdTime.setAttribute('data-tz', wh.timeZone);
             tdTime.textContent = formatLiveTime(wh.timeZone) || '—';
             tr.appendChild(tdTime);
 
-            // 6. Площадь ЛО
             const tdArea = document.createElement('td');
             tdArea.style.fontWeight = '700';
             tdArea.textContent = wh.area || '—';
             tr.appendChild(tdArea);
 
-            // 7. Зона СГТ
             const tdSgt = document.createElement('td');
             tdSgt.style.fontWeight = '700';
             tdSgt.textContent = wh.sgtArea || '—';
             tr.appendChild(tdSgt);
 
-            // 8. Ворота СГТ
             const tdGates = document.createElement('td');
             tdGates.style.fontWeight = '700';
             tdGates.textContent = wh.gates || '—';
             tr.appendChild(tdGates);
 
-            // 9. ФБО / ФБС
             const tdFboFbs = document.createElement('td');
             tdFboFbs.style.fontSize = '12px';
             const fboFbs = [
@@ -1629,7 +1607,6 @@
             tdFboFbs.textContent = fboFbs;
             tr.appendChild(tdFboFbs);
 
-            // 10. Навигация
             const tdNav = document.createElement('td');
             const mapQuery = encodeURIComponent(wh.coords || wh.address || wh.title);
             const routeBtn = document.createElement('a');
@@ -1668,17 +1645,25 @@
 
             const fragment = document.createDocumentFragment();
             filteredLinks.forEach(item => {
-                const a = document.createElement('a');
-                a.className = 'link-card';
-                a.href = item.url;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
+                const isLocked = item.locked || !item.url;
+                const cardEl = document.createElement(isLocked ? 'div' : 'a');
+                cardEl.className = 'link-card' + (isLocked ? ' locked-card' : '');
+
+                if (!isLocked) {
+                    cardEl.href = item.url;
+                    cardEl.target = '_blank';
+                    cardEl.rel = 'noopener noreferrer';
+                } else {
+                    cardEl.addEventListener('click', () => {
+                        showToast('🔒 Доступ к этой таблице ограничен администратором');
+                    });
+                }
 
                 const header = document.createElement('div');
                 header.className = 'link-card-header';
                 const iconSpan = document.createElement('span');
                 iconSpan.className = 'link-card-icon';
-                iconSpan.textContent = item.icon;
+                iconSpan.textContent = isLocked ? '🔒' : item.icon;
                 const h3 = document.createElement('h3');
                 h3.appendChild(createHighlightedFragment(item.title, query));
                 header.append(iconSpan, h3);
@@ -1689,10 +1674,10 @@
 
                 const actionDiv = document.createElement('div');
                 actionDiv.className = 'link-card-action';
-                actionDiv.textContent = 'Открыть ↗';
+                actionDiv.textContent = isLocked ? '🔒 Доступ закрыт' : 'Открыть ↗';
 
-                a.append(header, descDiv, actionDiv);
-                fragment.appendChild(a);
+                cardEl.append(header, descDiv, actionDiv);
+                fragment.appendChild(cardEl);
             });
             container.textContent = '';
             container.appendChild(fragment);
