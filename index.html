@@ -6,6 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://api-maps.yandex.ru https://*.yandex.ru https://yandex.st https://yastatic.net; style-src 'self' 'unsafe-inline' https://*.yandex.ru https://yastatic.net; img-src 'self' data: https: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.yandex.ru https://*.maps.yandex.net; frame-src https://yandex.ru https://*.yandex.ru; font-src 'self' data: https://yastatic.net; object-src 'none'; base-uri 'self';">
     <title>Навигатор по складам WB</title>
     
+    <!-- Иконки и PWA настройки для iPhone / Android / ПК -->
     <link rel="icon" type="image/png" href="./icon.png">
     <link rel="apple-touch-icon" href="./icon.png">
     <meta name="theme-color" content="#0b0f19">
@@ -13,7 +14,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Склады WB">
 
+    <!-- Манифест для установки приложения (PWA) -->
     <link rel="manifest" href="./manifest.json">
+
+    <!-- Движок Яндекс.Карт для живых точек по статусам из таблицы -->
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
 
     <style>
@@ -109,6 +113,7 @@
         ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--wb-accent); }
 
+        /* ЭКРАН АВТОРИЗАЦИИ */
         #authOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-color); display: none; justify-content: center; align-items: center;
@@ -159,6 +164,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* ШАПКА С УЧЕТОМ SAFE-AREA НА IPHONE */
         .sticky-header {
             position: sticky; top: 0; z-index: 100;
             background: var(--glass-header); 
@@ -194,6 +200,7 @@
         .install-btn { background: var(--id-badge-bg); border-color: var(--id-badge-border); color: var(--id-badge-text); }
         @media (max-width: 540px) { .btn-text-hide { display: none; } .share-btn, .install-btn { width: 38px; padding: 0; } }
 
+        /* ПОИСК И ХОТКЕЙ-БЕЙДЖ */
         .search-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
         .search-container { position: relative; flex-grow: 1; display: flex; align-items: center; min-width: 240px; }
         .search-container svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; height: 18px; pointer-events: none; }
@@ -214,6 +221,7 @@
         }
         .sort-select:focus { border-color: var(--wb-accent); }
 
+        /* БЫСТРЫЕ ЧИПСЫ-ФИЛЬТРЫ */
         .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .filter-chips::-webkit-scrollbar { display: none; }
         .chip {
@@ -225,6 +233,7 @@
 
         mark.highlight { background: var(--highlight-bg); color: inherit; border-radius: 3px; padding: 0 2px; }
 
+        /* ВКЛАДКИ */
         .nav-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--border-color); scrollbar-width: none; }
         .nav-tabs::-webkit-scrollbar { display: none; }
         
@@ -245,6 +254,7 @@
         }
         .offline-badge.visible { display: inline-block; }
 
+        /* KPI ДАШБОРД НАД СЕТКОЙ */
         .kpi-bar {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
             margin-top: 16px;
@@ -256,6 +266,7 @@
         .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
         .kpi-val { font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: 2px; }
 
+        /* СЕТКА КАРТОЧЕК */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; padding-top: 16px; width: 100%; }
 
         .card { 
@@ -329,6 +340,7 @@
         .route-btn { display: inline-flex; align-items: center; gap: 5px; background: var(--wb-gradient); color: white; border: none; padding: 6px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; transition: opacity 0.2s; flex-shrink: 0; }
         .route-btn:hover { opacity: 0.9; }
 
+        /* КОМПАКТНЫЙ ТАБЛИЧНЫЙ ВИД ДЛЯ ПК / ПЛАНШЕТОВ */
         .table-wrapper { width: 100%; overflow-x: auto; margin-top: 16px; border: 1px solid var(--border-color); border-radius: 14px; background: var(--card-bg); }
         table.compact-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
         table.compact-table th { background: var(--inner-box-bg); color: var(--text-muted); font-weight: 700; padding: 12px 14px; border-bottom: 1px solid var(--border-color); white-space: nowrap; font-size: 11px; text-transform: uppercase; }
@@ -358,6 +370,7 @@
         #toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-color); padding: 11px 22px; border-radius: 100px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 6000; white-space: nowrap; }
         #toast.show { bottom: calc(28px + env(safe-area-inset-bottom)); }
 
+        /* МОДАЛЬНОЕ ОКНО С ПОДДЕРЖКОЙ СВАЙПА НА IPHONE */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.25s ease; }
         .modal-overlay.active { opacity: 1; }
 
@@ -399,6 +412,7 @@
 </head>
 <body>
 
+<!-- ЭКРАН ЗАЩИЩЕННОГО ВХОДА -->
 <div id="authOverlay">
     <div class="auth-box">
         <div class="auth-logo">🏬</div>
@@ -410,6 +424,7 @@
     </div>
 </div>
 
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС НАВИГАТОРА -->
 <div class="container" id="appContainer">
     <div class="sticky-header">
         <div class="header-area">
@@ -488,7 +503,8 @@
         theme: 'wb_theme_v1',
         viewMode: 'wb_view_mode_v1',
         cache: 'wb_wh_cache_sec_v1',
-        linksCache: 'wb_links_cache_sec_v1'
+        linksCache: 'wb_links_cache_sec_v1',
+        mapUrlCache: 'wb_map_url_sec_v1'
     };
 
     const HAS_STORAGE = (function() {
@@ -502,6 +518,7 @@
 
     let warehousesData = [];
     let linksData = [];
+    let serverMapEmbedUrl = '';
     let favorites = [];
     let currentTab = 'Все склады';
     let currentChip = 'all';
@@ -563,6 +580,7 @@
         favorites = safeGetJSON(STORAGE_KEYS.favorites, []);
         if (!Array.isArray(favorites)) favorites = [];
         viewMode = safeGetString(STORAGE_KEYS.viewMode, 'grid');
+        serverMapEmbedUrl = safeGetString(STORAGE_KEYS.mapUrlCache, '');
         updateViewToggleIcon();
         initTheme();
         bindStaticEvents();
@@ -651,14 +669,17 @@
                 localStorage.removeItem(STORAGE_KEYS.authUser);
                 localStorage.removeItem(STORAGE_KEYS.cache);
                 localStorage.removeItem(STORAGE_KEYS.linksCache);
+                localStorage.removeItem(STORAGE_KEYS.mapUrlCache);
             }
         } catch (e) {}
         delete memoryStore[STORAGE_KEYS.authToken];
         delete memoryStore[STORAGE_KEYS.authUser];
         delete memoryStore[STORAGE_KEYS.cache];
         delete memoryStore[STORAGE_KEYS.linksCache];
+        delete memoryStore[STORAGE_KEYS.mapUrlCache];
         warehousesData = [];
         linksData = [];
+        serverMapEmbedUrl = '';
         updateUserBadge('');
         showLoginScreen(reasonMsg || 'Доступ закрыт администратором. Кэш очищен.');
     }
@@ -756,6 +777,10 @@
     }
 
     function applyServerPayload(data, isManual) {
+        if (typeof data.mapEmbedUrl === 'string' && data.mapEmbedUrl) {
+            serverMapEmbedUrl = data.mapEmbedUrl;
+            safeSetString(STORAGE_KEYS.mapUrlCache, serverMapEmbedUrl);
+        }
         if (data.warehouses) {
             warehousesData = parseSheetTableStrict(data.warehouses);
             safeSetJSON(STORAGE_KEYS.cache, warehousesData);
@@ -1211,7 +1236,6 @@
         return parsed;
     }
 
-    // Парсинг таблиц с учетом серверной блокировки доступа (LOCKED / ALLOWED)
     function parseLinksTable(tableData) {
         const rows = tableData.rows || [];
         if (rows.length === 0) return [];
@@ -1378,17 +1402,21 @@
 
     function getConstructorEmbedUrl() {
         const defaultUm = 'constructor%3Abaac090cd030b1c4fa84e4805051aec0e78ac981d19f7a237f599af6563c0754';
-        const mapRow = linksData.find(l => 
-            l.url && (
-                l.title.toLowerCase().includes('карта') || 
-                l.url.includes('um=constructor') || 
-                l.url.includes('map-widget')
-            )
-        );
-        if (!mapRow || !mapRow.url) {
+        let rawUrl = serverMapEmbedUrl;
+        if (!rawUrl) {
+            const mapRow = linksData.find(l => 
+                l.url && (
+                    l.title.toLowerCase().includes('карта') || 
+                    l.url.includes('um=constructor') || 
+                    l.url.includes('map-widget')
+                )
+            );
+            rawUrl = mapRow ? mapRow.url : '';
+        }
+        if (!rawUrl) {
             return `https://yandex.ru/map-widget/v1/?um=${defaultUm}&source=constructor`;
         }
-        const rawUrl = mapRow.url.trim();
+        rawUrl = rawUrl.trim();
         if (rawUrl.includes('map-widget/v1')) return rawUrl;
 
         const match = rawUrl.match(/um=([^&]+)/);
@@ -1655,7 +1683,7 @@
                     cardEl.rel = 'noopener noreferrer';
                 } else {
                     cardEl.addEventListener('click', () => {
-                        showToast('🔒 Доступ к этой таблице ограничен администратором');
+                        showToast('🔒 Доступ открывается только по одобрению руководителя');
                     });
                 }
 
