@@ -1421,7 +1421,8 @@
 
         const match = rawUrl.match(/um=([^&]+)/);
         if (match && match[1]) {
-            return `https://yandex.ru/map-widget/v1/?um=${encodeURIComponent(match[1])}&source=constructor`;
+            const cleanUm = decodeURIComponent(match[1]);
+            return `https://yandex.ru/map-widget/v1/?um=${encodeURIComponent(cleanUm)}&source=constructor`;
         }
         return rawUrl;
     }
